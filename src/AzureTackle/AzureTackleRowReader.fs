@@ -37,6 +37,7 @@ type AzureTackleRowEntity(entity: DynamicTableEntity) =
 
         printfn "columnDict %A" columnDict
         failwithf "Could not read column '%s' as %s. Available columns are %s" column columnType availableColumns
+
     with
 
         // member __.int(columnIndex: int): int =
@@ -58,6 +59,10 @@ type AzureTackleRowEntity(entity: DynamicTableEntity) =
             match columnDict.TryGetValue(column) with
             | true, value -> value.StringValue
             | false, _ -> failToRead column "string"
+        // member __.stringOrNone(column: string): string option =
+        //     match columnDict.TryGetValue(column) with
+        //     | true, value -> value.StringValue
+        //     | false, _ -> failToRead column "string"
 
         member __.rowKey: SortableRowKey = SortableRowKey entity.RowKey
 

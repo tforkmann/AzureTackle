@@ -6,7 +6,7 @@ open System.Threading
 
 open Microsoft.WindowsAzure.Storage.Table
 open FSharp.Control.Tasks.ContextInsensitive
-
+open TableReflection
 module GetTableEntry =
 
     let getResultsRecursivly (filter: string option) (table: CloudTable) =
@@ -35,9 +35,11 @@ module GetTableEntry =
 
 type AzureFilter =
     | Float of string * float
+    | String of string * string
+    | DateTime of string * DateTime
+    | DateTimeOffset of string * DateTimeOffset
     | PartKey of  string
     | SortableRowKey of  string
-    | String of string * string
 //  = TableQuery.GenerateFilterCondition (field, QueryComparisons.Equal, value)
 [<RequireQualifiedAccess>]
 module AzureTable =
@@ -64,6 +66,8 @@ module AzureTable =
                 | Float (fieldName, value) ->
                     TableQuery.GenerateFilterConditionForDouble(fieldName, QueryComparisons.Equal, value)
                 | String (fieldName, value) -> TableQuery.GenerateFilterCondition(fieldName, QueryComparisons.Equal, value)
+                | DateTime (fieldName, value) -> TableQuery.GenerateFilterConditionForDate(fieldName, QueryComparisons.Equal, (value |> System.DateTimeOffset))
+                | DateTimeOffset (fieldName, value) -> TableQuery.GenerateFilterConditionForDate(fieldName, QueryComparisons.Equal, value)
                 | PartKey value -> TableQuery.GenerateFilterCondition("PartitionKey", QueryComparisons.Equal, value)
                 | SortableRowKey value -> TableQuery.GenerateFilterCondition("RowKey", QueryComparisons.Equal, value)
 
@@ -83,5 +87,19 @@ module AzureTable =
                 return Ok [| for result in results ->
                                 let e = AzureTackleRowEntity(result)
                                 read e |]
+            with exn -> return Error exn
+        }
+    let executeWithReflection<'a> (props: TableProps) =
+        task {
+            try
+                let azureTable =
+                    match props.AzureTable with
+                    | Some table -> table
+                    | None -> failwith "please add a table"
+
+                let filter = appendFilters props.Filters
+                let! results = getResultsRecursivly filter azureTable
+                return Ok [| for result in results ->
+                                result |> buildRecordFromEntityNoCache<'a> |]
             with exn -> return Error exn
         }
