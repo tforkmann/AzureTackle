@@ -1,0 +1,26 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "outputs": {
+    "storage_key": {
+      "type": "string",
+      "value": "[concat('DefaultEndpointsProtocol=https;AccountName=dptestchiadev;AccountKey=', listKeys(resourceId('Microsoft.Storage/storageAccounts', 'dptestchiadev'), '2017-10-01').keys[0].value)]"
+    }
+  },
+  "parameters": {},
+  "resources": [
+    {
+      "apiVersion": "2019-04-01",
+      "dependsOn": [],
+      "kind": "StorageV2",
+      "location": "westeurope",
+      "name": "dptestchiadev",
+      "properties": {},
+      "sku": {
+        "name": "Standard_LRS"
+      },
+      "tags": {},
+      "type": "Microsoft.Storage/storageAccounts"
+    }
+  ]
+}

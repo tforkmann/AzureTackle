@@ -1,0 +1,25 @@
+group AzureTackle
+  storage: none
+  source https://api.nuget.org/v3/index.json
+  frameworks: net5.0, netstandard2.0
+  nuget FSharp.Core == 5.0.0
+  nuget TaskBuilder.fs
+  nuget Chia
+group Test
+  storage: none
+  source https://api.nuget.org/v3/index.json
+  nuget Expecto
+  nuget Chia
+
+group Docs
+    source https://api.nuget.org/v3/index.json
+    framework: net5.0
+    nuget Feliz.Router
+    nuget Zanaptak.TypedCssClasses
+    nuget Fable.SimpleHttp
+    nuget Feliz.ElmishComponents
+    nuget Feliz.UseDeferred
+    nuget Feliz.Popover
+    nuget Feliz.Markdown
+    nuget Feliz.Bulma
+    nuget Chia.Client
