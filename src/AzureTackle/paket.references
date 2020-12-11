@@ -1,3 +1,4 @@
 group AzureTackle
-  Chia
   FSharp.Core
+  WindowsAzure.Storage
+  TaskBuilder.fs

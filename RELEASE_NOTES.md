@@ -1,3 +1,5 @@
+#### 0.1.4 - 2020-06-11
+* Get rid of Chia and add connect helper
 #### 0.1.3 - 2020-06-11
 * Add binary and datetime
 #### 0.1.2 - 2020-06-11

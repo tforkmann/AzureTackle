@@ -4,13 +4,13 @@ group AzureTackle
   frameworks: net5.0, netstandard2.0
   nuget FSharp.Core == 5.0.0
   nuget TaskBuilder.fs
-  nuget Chia
+  nuget WindowsAzure.Storage
 group Test
   storage: none
   source https://api.nuget.org/v3/index.json
   nuget Expecto
+  nuget WindowsAzure.Storage
   nuget Chia
-
 group Docs
     source https://api.nuget.org/v3/index.json
     framework: net5.0

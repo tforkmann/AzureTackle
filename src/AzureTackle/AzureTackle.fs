@@ -1,13 +1,45 @@
 namespace AzureTackle
 
 open System
-open System.Data
-open System.Threading
-
+open Microsoft.WindowsAzure.Storage
 open Microsoft.WindowsAzure.Storage.Table
 open FSharp.Control.Tasks.ContextInsensitive
 open TableReflection
-module GetTableEntry =
+open System.Threading.Tasks
+module Table =
+    type AzureAccount =
+        { StorageAccount: CloudStorageAccount }
+    type AzureConnection =
+        | AzureConnection of string
+        member this.Connect() =
+            match this with
+            | AzureConnection connectionString -> { StorageAccount = CloudStorageAccount.Parse connectionString }
+    let getTable tableName (azConnection:AzureAccount) =
+            task {
+                let client = azConnection.StorageAccount.CreateCloudTableClient()
+
+                let table =
+                    try
+                        client.GetTableReference tableName
+                    with exn ->
+                        let msg =
+                            sprintf "Could not get TableReference %s" exn.Message
+                        failwith msg
+                /// Azure will temporarily lock table names after deleting and can take some time before the table name is made available again.
+                let rec createTableSafe() =
+                    task {
+                        try
+                            let! _ = table.CreateIfNotExistsAsync()
+                            ()
+                        with _ ->
+                            do! Task.Delay 5000
+                            return! createTableSafe()
+                    }
+                do! createTableSafe()
+                return table
+            }
+            |> Async.AwaitTask
+            |> Async.RunSynchronously
 
     let getResultsRecursivly (filter: string option) (table: CloudTable) =
         task {
@@ -43,17 +75,25 @@ type AzureFilter =
 
 [<RequireQualifiedAccess>]
 module AzureTable =
-    open GetTableEntry
+    open Table
 
     type TableProps =
         { Filters: AzureFilter list
-          AzureTable: CloudTable option }
+          AzureTable: CloudTable option
+          AzureAccount : AzureAccount option }
 
-    let private defaultProps () = { Filters = []; AzureTable = None }
+    let private defaultProps () = { Filters = []; AzureTable = None; AzureAccount = None}
 
-    let table (azureTable: CloudTable) =
+    let connect (connectionString: string) =
+        let connection =  AzureConnection connectionString
         { defaultProps () with
-              AzureTable = Some azureTable }
+              AzureAccount = Some (connection.Connect()) }
+    let table tableName (props: TableProps) =
+        match props.AzureAccount with
+        | Some azureAccount ->
+            { props with
+                AzureTable = Some (getTable tableName azureAccount) }
+        | None -> failwith "please use connect to initialize the Azure connection"
 
     let filter (filters: AzureFilter list) (props: TableProps) = { props with Filters = filters }
 

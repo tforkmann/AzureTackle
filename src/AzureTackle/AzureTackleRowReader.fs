@@ -3,7 +3,6 @@ namespace AzureTackle
 open System
 open System.Collections.Generic
 open Microsoft.WindowsAzure.Storage.Table
-open Chia.Shared.Ids
 type Props =
     | FLT
     | INT32
@@ -13,25 +12,21 @@ type Props =
     | DTO
     | BOOL
     | BINARY
+type RowKey =
+    | RowKey of string
+    member this.GetValue = (fun (RowKey id) -> id) this
 
+module RowKey =
+    let toRowKey (dateTime: DateTime) =
+        String.Format("{0:D19}", DateTime.MaxValue.Ticks - dateTime.Ticks)
+        |> RowKey
+
+    let toDate (RowKey ticks) =
+        DateTime(DateTime.MaxValue.Ticks - int64 ticks)
 type AzureTackleRowEntity(entity: DynamicTableEntity) =
-    // let columnDict = Dictionary<string, int>()
     let columnDict = Dictionary<string, EntityProperty>()
 
     do
-        // Populate the names of the columns into a dictionary
-        // such that each read doesn't need to loop through all columns
-        // for fieldIndex in [ 0 .. entity.Properties.Count - 1 ] do
-        //     let dict = entity.Properties |> Seq.map (fun keyPair -> keyPair.Key,keyPair.Value) |> Seq.toList
-        //     let columnName = dict.[fieldIndex] |> fst
-        //     let columnType = dict.[fieldIndex] |> snd |> string
-        //     // printfn "count %A" entity.Properties.Count
-        //     // printfn "columnName %A" columnName
-        //     // printfn "columnType %A" columnType
-        //     columnDict.Add(columnName, fieldIndex)
-        //     columnTypes.Add(columnName,columnType)
-        //     types.Add(columnType)
-        //  anually add RowKey and PartitionKey
 
         entity.Properties
         |> Seq.iter (fun keyPair -> columnDict.Add(keyPair.Key, keyPair.Value))
@@ -68,7 +63,7 @@ type AzureTackleRowEntity(entity: DynamicTableEntity) =
         | _ -> None
 
     with
-        member __.rowKey: SortableRowKey = SortableRowKey entity.RowKey
+        member __.rowKey: RowKey = RowKey entity.RowKey
 
         member __.partKey: string = entity.PartitionKey
         member __.int(column: string): int =

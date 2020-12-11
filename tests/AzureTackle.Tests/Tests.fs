@@ -2,24 +2,15 @@ module Tests
 
 open Expecto
 open System
-// open Chia
-// open TimeCalculation.Utils
 open Chia.Infrastructure
-open Farmer
 open Chia.CreateTable
 open Chia.TableStorage
 open AzureTackle
-// open TableStorage
-// open PostToQueue
-// open GetTableEntry
 open Chia.InitBuilder
-// open Shared.Time
 open Chia.Shared.Config
 open Chia.Shared.Logging
 open Chia.Shared.Ids
 open Microsoft.WindowsAzure.Storage.Table
-// open System
-// open Chia.Shared.Config.EnviromentHelper
 
 let fileWriterConfig =
     initWriter {
@@ -30,16 +21,17 @@ let fileWriterConfig =
     }
 
 printfn "Starting Tests"
+let connectionString = "DefaultEndpointsProtocol=https;AccountName=dptestchiadev;AccountKey=Vd64M6dPKvW/yRQ32xvptAJWV0GGlaeZJxkArJ8ZGJEKWx/aZH5KAxMMPHJkeL/gMiJb65krq8S5yRxCK67p8w==;BlobEndpoint=https://dptestchiadev.blob.core.windows.net/;QueueEndpoint=https://dptestchiadev.queue.core.windows.net/;TableEndpoint=https://dptestchiadev.table.core.windows.net/;FileEndpoint=https://dptestchiadev.file.core.windows.net/;"
 
 let azAccount =
-    azConnectionExisting fileWriterConfig "DefaultEndpointsProtocol=https;AccountName=dptestchiadev;AccountKey=Vd64M6dPKvW/yRQ32xvptAJWV0GGlaeZJxkArJ8ZGJEKWx/aZH5KAxMMPHJkeL/gMiJb65krq8S5yRxCK67p8w==;BlobEndpoint=https://dptestchiadev.blob.core.windows.net/;QueueEndpoint=https://dptestchiadev.queue.core.windows.net/;TableEndpoint=https://dptestchiadev.table.core.windows.net/;FileEndpoint=https://dptestchiadev.file.core.windows.net/;"
+    azConnectionExisting fileWriterConfig connectionString
 
 [<Literal>]
 let TestTable = "TestTable"
 
 type TestData =
     { PartKey: string
-      RowKey: SortableRowKey
+      RowKey: RowKey
       Date: DateTimeOffset
       Exists: bool
       Value: float
@@ -54,7 +46,7 @@ let simpleTest =
 
               let testData =
                   [| { PartKey = "PartKey"
-                       RowKey = DateTime.UtcNow |> SortableRowKey.toRowKey
+                       RowKey = DateTime.UtcNow |> RowKey.toRowKey
                        Date = DateTime.UtcNow |> System.DateTimeOffset
                        Value = 0.2
                        Exists = true
@@ -70,8 +62,8 @@ let simpleTest =
               let! _ = saveDataArrayBatch tableMapper testTable fileWriterConfig testData
 
               let! values =
-                 AzureTable.table testTable
-                //  |> AzureTable.filter [PartKey "Partkey"]
+                 AzureTable.connect connectionString
+                 |>AzureTable.table TestTable
                  |> AzureTable.execute (fun read ->
                     { PartKey = read.partKey
                       RowKey = read.rowKey
