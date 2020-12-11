@@ -74,14 +74,21 @@ type AzureTackleRowEntity(entity: DynamicTableEntity) =
                 failwithf
                     "Could not get INT32 value of property %s for entity %s %s. Message: %s"
                     column entity.PartitionKey entity.RowKey exn.Message
-
+        member __.intOrNone(column: string): int option =
+            try
+                getOptionalProperty column entity
+                |> Option.map (fun prop -> prop.Int32Value.Value)
+            with exn ->
+                failwithf
+                    "Could not get INT32 value of property %s for entity %s %s. Message: %s"
+                    column entity.PartitionKey entity.RowKey exn.Message
         member __.float(column: string): float =
             try
                 let prop = getProperty column FLT entity
                 prop.DoubleValue.Value
             with exn ->
                 failwithf
-                    "Could not get Double value of property %s for entity %s %s. Message: %s"
+                    "Could not get float value of property %s for entity %s %s. Message: %s"
                     column entity.PartitionKey entity.RowKey exn.Message
         member __.floatOrNone(column: string): float option =
             try
@@ -89,7 +96,7 @@ type AzureTackleRowEntity(entity: DynamicTableEntity) =
                 |> Option.map (fun prop -> prop.DoubleValue.Value)
             with exn ->
                 failwithf
-                    "Could not get string value of property %s for entity %s %s. Message: %s"
+                    "Could not get float value of property %s for entity %s %s. Message: %s"
                     column entity.PartitionKey entity.RowKey exn.Message
         member __.string(column: string): string =
             try
@@ -97,7 +104,7 @@ type AzureTackleRowEntity(entity: DynamicTableEntity) =
                 prop.StringValue
             with exn ->
                 failwithf
-                    "Could not get String value of property %s for entity %s %s. Message: %s"
+                    "Could not get string value of property %s for entity %s %s. Message: %s"
                     column entity.PartitionKey entity.RowKey exn.Message
         member __.stringOrNone(column: string): string option =
             try
@@ -113,7 +120,7 @@ type AzureTackleRowEntity(entity: DynamicTableEntity) =
                 prop.DateTime.Value
             with exn ->
                 failwithf
-                    "Could not get Datetime value of property %s for entity %s %s. Message: %s"
+                    "Could not get datetime value of property %s for entity %s %s. Message: %s"
                     column entity.PartitionKey entity.RowKey exn.Message
         member __.dateTimeOrNone(column: string): DateTime option =
             try
@@ -121,7 +128,7 @@ type AzureTackleRowEntity(entity: DynamicTableEntity) =
                 |> Option.map (fun prop -> prop.DateTime.Value)
             with exn ->
                 failwithf
-                    "Could not get Datetime value of property %s for entity %s %s. Message: %s"
+                    "Could not get datetime value of property %s for entity %s %s. Message: %s"
                     column entity.PartitionKey entity.RowKey exn.Message
         member __.dateTimeOffset(column: string): DateTimeOffset =
             try
@@ -129,7 +136,7 @@ type AzureTackleRowEntity(entity: DynamicTableEntity) =
                 prop.DateTimeOffsetValue.Value
             with exn ->
                 failwithf
-                    "Could not get DateTimeOffset value of property %s for entity %s %s. Message: %s"
+                    "Could not get dateTimeOffset value of property %s for entity %s %s. Message: %s"
                     column entity.PartitionKey entity.RowKey exn.Message
         member __.dateTimeOffsetOrNone(column: string): DateTimeOffset option =
             try
@@ -145,7 +152,7 @@ type AzureTackleRowEntity(entity: DynamicTableEntity) =
                 prop.Int64Value.Value
             with exn ->
                 failwithf
-                    "Could not get DateTimeOffset value of property %s for entity %s %s. Message: %s"
+                    "Could not get dateTimeOffset value of property %s for entity %s %s. Message: %s"
                     column entity.PartitionKey entity.RowKey exn.Message
         member __.bigIntOrNone(column: string): int64 option =
             try

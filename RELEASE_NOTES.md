@@ -1,3 +1,5 @@
+#### 0.1.7 - 2020-06-11
+* Add intOrNone
 #### 0.1.6 - 2020-06-11
 * Make AzureTackle accessable for Fable
 #### 0.1.5 - 2020-06-11
