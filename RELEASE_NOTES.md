@@ -1,3 +1,5 @@
+#### 0.1.6 - 2020-06-11
+* Make AzureTackle accessable for Fable
 #### 0.1.5 - 2020-06-11
 * Add operators for Azure Filter
 #### 0.1.4 - 2020-06-11
