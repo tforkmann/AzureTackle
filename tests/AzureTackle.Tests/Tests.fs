@@ -41,6 +41,7 @@ type TestData =
     { PartKey: string
       RowKey: SortableRowKey
       Date: DateTimeOffset
+      Exists: bool
       Value: float
       Text: string }
 
@@ -54,8 +55,9 @@ let simpleTest =
               let testData =
                   [| { PartKey = "PartKey"
                        RowKey = DateTime.UtcNow |> SortableRowKey.toRowKey
-                       Date = DateTime.UtcNow |> DateTimeOffset
+                       Date = DateTime.UtcNow |> System.DateTimeOffset
                        Value = 0.2
+                       Exists = true
                        Text = "isWorking" } |]
 
               let tableMapper (testData: TestData) =
@@ -63,6 +65,7 @@ let simpleTest =
                   |> setDateTimeOffsetProperty "Date" testData.Date
                   |> setDoubleProperty "Value" testData.Value
                   |> setStringProperty "Text" testData.Text
+                  |> setBoolProperty "Exists" testData.Exists
 
               let! _ = saveDataArrayBatch tableMapper testTable fileWriterConfig testData
 
@@ -73,6 +76,7 @@ let simpleTest =
                     { PartKey = read.partKey
                       RowKey = read.rowKey
                       Date = read.dateTimeOffset "Date"
+                      Exists = read.bool "Exists"
                       Value = read.float "Value"
                       Text= read.string "Text" })
               let data =
