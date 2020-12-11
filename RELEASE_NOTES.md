@@ -1,3 +1,5 @@
+#### 0.1.5 - 2020-06-11
+* Add operators for Azure Filter
 #### 0.1.4 - 2020-06-11
 * Get rid of Chia and add connect helper
 #### 0.1.3 - 2020-06-11

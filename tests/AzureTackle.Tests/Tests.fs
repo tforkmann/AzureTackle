@@ -9,7 +9,6 @@ open AzureTackle
 open Chia.InitBuilder
 open Chia.Shared.Config
 open Chia.Shared.Logging
-open Chia.Shared.Ids
 open Microsoft.WindowsAzure.Storage.Table
 
 let fileWriterConfig =

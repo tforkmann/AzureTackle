@@ -65,13 +65,21 @@ module Table =
             return! getResults null
         }
 
+type Operator =
+| LessThen
+| LessThenOrEqual
+| GreaterThen
+| GreaterThenOrEqual
+| Equal
+| NotEqual
+
 type AzureFilter =
-    | Flt of string * float
-    | Txt of string * string
-    | Dtm of string * DateTime
-    | DtmO of string * DateTimeOffset
-    | PartKey of  string
-    | SortableRowKey of  string
+    | Flt of string * Operator * float
+    | Txt of string * Operator * string
+    | Dtm of string * Operator * DateTime
+    | DtmO of string * Operator *  DateTimeOffset
+    | PartKey of Operator * string
+    | SortableRowKey of Operator * string
 
 [<RequireQualifiedAccess>]
 module AzureTable =
@@ -98,18 +106,25 @@ module AzureTable =
     let filter (filters: AzureFilter list) (props: TableProps) = { props with Filters = filters }
 
     let appendFilters (filters: AzureFilter list) =
-
+        let matchOperator operator=
+            match operator with
+            | LessThen -> QueryComparisons.LessThan
+            | LessThenOrEqual -> failwith "Not Implemented"
+            | GreaterThen -> QueryComparisons.GreaterThan
+            | GreaterThenOrEqual -> QueryComparisons.GreaterThanOrEqual
+            | Equal -> QueryComparisons.Equal
+            | NotEqual -> QueryComparisons.NotEqual
         filters
         |> List.fold (fun r s ->
             let filterString =
                 match s with
-                | Flt (fieldName, value) ->
-                    TableQuery.GenerateFilterConditionForDouble(fieldName, QueryComparisons.Equal, value)
-                | Txt (fieldName, value) -> TableQuery.GenerateFilterCondition(fieldName, QueryComparisons.Equal, value)
-                | Dtm (fieldName, value) -> TableQuery.GenerateFilterConditionForDate(fieldName, QueryComparisons.Equal, (value |> DateTimeOffset))
-                | DtmO (fieldName, value) -> TableQuery.GenerateFilterConditionForDate(fieldName, QueryComparisons.Equal, value)
-                | PartKey value -> TableQuery.GenerateFilterCondition("PartitionKey", QueryComparisons.Equal, value)
-                | SortableRowKey value -> TableQuery.GenerateFilterCondition("RowKey", QueryComparisons.Equal, value)
+                | Flt (fieldName,operator, value) ->
+                    TableQuery.GenerateFilterConditionForDouble(fieldName, matchOperator operator , value)
+                | Txt (fieldName,operator, value) -> TableQuery.GenerateFilterCondition(fieldName, matchOperator operator, value)
+                | Dtm (fieldName,operator, value) -> TableQuery.GenerateFilterConditionForDate(fieldName, matchOperator operator, (value |> DateTimeOffset))
+                | DtmO (fieldName,operator, value) -> TableQuery.GenerateFilterConditionForDate(fieldName, matchOperator operator, value)
+                | PartKey (operator,value) -> TableQuery.GenerateFilterCondition("PartitionKey", matchOperator operator, value)
+                | SortableRowKey (operator,value) -> TableQuery.GenerateFilterCondition("RowKey", matchOperator operator, value)
 
             if r = "" then r + filterString else r + " and " + filterString) ""
         |> Some
