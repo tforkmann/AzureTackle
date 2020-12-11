@@ -34,13 +34,13 @@ module GetTableEntry =
         }
 
 type AzureFilter =
-    | Float of string * float
-    | String of string * string
-    | DateTime of string * DateTime
-    | DateTimeOffset of string * DateTimeOffset
+    | Flt of string * float
+    | Txt of string * string
+    | Dtm of string * DateTime
+    | DtmO of string * DateTimeOffset
     | PartKey of  string
     | SortableRowKey of  string
-//  = TableQuery.GenerateFilterCondition (field, QueryComparisons.Equal, value)
+
 [<RequireQualifiedAccess>]
 module AzureTable =
     open GetTableEntry
@@ -63,11 +63,11 @@ module AzureTable =
         |> List.fold (fun r s ->
             let filterString =
                 match s with
-                | Float (fieldName, value) ->
+                | Flt (fieldName, value) ->
                     TableQuery.GenerateFilterConditionForDouble(fieldName, QueryComparisons.Equal, value)
-                | String (fieldName, value) -> TableQuery.GenerateFilterCondition(fieldName, QueryComparisons.Equal, value)
-                | DateTime (fieldName, value) -> TableQuery.GenerateFilterConditionForDate(fieldName, QueryComparisons.Equal, (value |> System.DateTimeOffset))
-                | DateTimeOffset (fieldName, value) -> TableQuery.GenerateFilterConditionForDate(fieldName, QueryComparisons.Equal, value)
+                | Txt (fieldName, value) -> TableQuery.GenerateFilterCondition(fieldName, QueryComparisons.Equal, value)
+                | Dtm (fieldName, value) -> TableQuery.GenerateFilterConditionForDate(fieldName, QueryComparisons.Equal, (value |> DateTimeOffset))
+                | DtmO (fieldName, value) -> TableQuery.GenerateFilterConditionForDate(fieldName, QueryComparisons.Equal, value)
                 | PartKey value -> TableQuery.GenerateFilterCondition("PartitionKey", QueryComparisons.Equal, value)
                 | SortableRowKey value -> TableQuery.GenerateFilterCondition("RowKey", QueryComparisons.Equal, value)
 

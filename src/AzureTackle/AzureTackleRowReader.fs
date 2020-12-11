@@ -5,12 +5,15 @@ open System.Collections.Generic
 open Microsoft.WindowsAzure.Storage.Table
 open Chia.Shared.Ids
 type Props =
-    | Float
+    | FLT
     | INT32
     | BIGINT
-    | STRING
-    | DATETIMEOFFSET
+    | TXT
+    | DT
+    | DTO
     | BOOL
+    | BINARY
+
 type AzureTackleRowEntity(entity: DynamicTableEntity) =
     // let columnDict = Dictionary<string, int>()
     let columnDict = Dictionary<string, EntityProperty>()
@@ -40,12 +43,14 @@ type AzureTackleRowEntity(entity: DynamicTableEntity) =
             |> String.concat ", "
         let columnTypStr =
             match columnType with
-            | Float -> "float"
+            | FLT -> "float"
             | INT32 -> "int32"
-            | STRING -> "string"
-            | DATETIMEOFFSET -> "datetimeoffset"
+            | TXT -> "string"
+            | DTO -> "datetimeoffset"
             | BIGINT -> "int64"
             | BOOL -> "bool"
+            | DT -> "datetime"
+            | BINARY -> "binary"
         failwithf "Could not read property '%s' as %s. Available columns are %s. Message: %s" column columnTypStr availableColumns  exn.Message
     let getProperty (propName : string) (columnType:Props) (entity : DynamicTableEntity) =
         let availableColumns =
@@ -77,7 +82,7 @@ type AzureTackleRowEntity(entity: DynamicTableEntity) =
 
         member __.float(column: string): float =
             try
-                let prop = getProperty column Float entity
+                let prop = getProperty column FLT entity
                 prop.DoubleValue.Value
             with exn ->
                 failwithf
@@ -93,7 +98,7 @@ type AzureTackleRowEntity(entity: DynamicTableEntity) =
                     column entity.PartitionKey entity.RowKey exn.Message
         member __.string(column: string): string =
             try
-                let prop = getProperty column STRING entity
+                let prop = getProperty column TXT entity
                 prop.StringValue
             with exn ->
                 failwithf
@@ -107,9 +112,25 @@ type AzureTackleRowEntity(entity: DynamicTableEntity) =
                 failwithf
                     "Could not get string value of property %s for entity %s %s. Message: %s"
                     column entity.PartitionKey entity.RowKey exn.Message
+        member __.dateTime(column: string): DateTime =
+            try
+                let prop = getProperty column DTO entity
+                prop.DateTime.Value
+            with exn ->
+                failwithf
+                    "Could not get Datetime value of property %s for entity %s %s. Message: %s"
+                    column entity.PartitionKey entity.RowKey exn.Message
+        member __.dateTimeOrNone(column: string): DateTime option =
+            try
+                getOptionalProperty column entity
+                |> Option.map (fun prop -> prop.DateTime.Value)
+            with exn ->
+                failwithf
+                    "Could not get Datetime value of property %s for entity %s %s. Message: %s"
+                    column entity.PartitionKey entity.RowKey exn.Message
         member __.dateTimeOffset(column: string): DateTimeOffset =
             try
-                let prop = getProperty column DATETIMEOFFSET entity
+                let prop = getProperty column DTO entity
                 prop.DateTimeOffsetValue.Value
             with exn ->
                 failwithf
@@ -154,5 +175,21 @@ type AzureTackleRowEntity(entity: DynamicTableEntity) =
             with exn ->
                 failwithf
                     "Could not get bool value of property %s for entity %s %s. Message: %s"
+                    column entity.PartitionKey entity.RowKey exn.Message
+        member __.binary(column: string): byte array =
+            try
+                let prop = getProperty column BINARY entity
+                prop.BinaryValue
+            with exn ->
+                failwithf
+                    "Could not get binary value of property %s for entity %s %s. Message: %s"
+                    column entity.PartitionKey entity.RowKey exn.Message
+        member __.binaryOrNone(column: string): byte array option=
+            try
+                getOptionalProperty column entity
+                |> Option.map (fun prop -> prop.BinaryValue)
+            with exn ->
+                failwithf
+                    "Could not get binary value of property %s for entity %s %s. Message: %s"
                     column entity.PartitionKey entity.RowKey exn.Message
 
