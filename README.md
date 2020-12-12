@@ -29,7 +29,7 @@ type User = { Id: int; Username: string }
 
 let! values =
     AzureTable.connect connectionString()
-    AzureTable.table testTable
+    |> AzureTable.table testTable
     |> AzureTable.execute (fun read ->
     { PartKey = read.partKey
         RowKey = read.rowKey
