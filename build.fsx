@@ -206,6 +206,7 @@ Target.create "Pack" (fun _ ->
               }) projectPath
 
     pack "AzureTackle"
+    pack "AzureTackle.Shared"
 )
 
 let getBuildParam = Environment.environVar

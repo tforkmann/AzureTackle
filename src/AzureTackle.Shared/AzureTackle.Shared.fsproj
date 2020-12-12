@@ -4,12 +4,7 @@
         <TargetFrameworks>net5.0</TargetFrameworks>
     </PropertyGroup>
     <ItemGroup>
-        <Compile Include="TableReflection.fs" />
-        <Compile Include="AzureTackleRowReader.fs" />
-        <Compile Include="AzureTackle.fs" />
-    </ItemGroup>  
-    <ItemGroup>
-        <ProjectReference Include="..\AzureTackle.Shared\AzureTackle.Shared.fsproj" />
+        <Compile Include="Shared.fs" />
     </ItemGroup>
     <Import Project="..\..\.paket\Paket.Restore.targets" />
 </Project>

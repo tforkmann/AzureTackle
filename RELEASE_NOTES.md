@@ -1,3 +1,5 @@
+#### 0.2.4 - 2020-06-12
+* Add shared to work with Fable
 #### 0.2.3 - 2020-06-12
 * Add autoopen for filter
 #### 0.2.2 - 2020-06-12
