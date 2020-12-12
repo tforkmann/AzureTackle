@@ -43,6 +43,25 @@ let data =
     | Error (exn:Exception) ->
         failwithf "no data exn :%s" exn.Message        
 ```
+## Query a table inside a task and directly receive the results
+```fs
+open AzureTackle
+
+// get the connection from the environment
+let connectionString() = Env.getVar "app_db"
+
+type User = { Id: int; Username: string }
+
+let! values =
+    AzureTable.connect connectionString()
+    |> AzureTable.table testTable
+    |> AzureTable.executeDirect (fun read ->
+    { PartKey = read.partKey
+        RowKey = read.rowKey
+        Date = read.dateTimeOffset "Date"
+        Value = read.float "Value"
+        Text = read.string "Text" })
+```
 
 ## Query a table inside a task with filter
 ```fs
