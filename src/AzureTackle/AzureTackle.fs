@@ -144,6 +144,22 @@ module AzureTable =
                                 read e |]
             with exn -> return Error exn
         }
+    let executeDirect (read: AzureTackleRowEntity -> 't) (props: TableProps) =
+        task {
+            try
+                let azureTable =
+                    match props.AzureTable with
+                    | Some table -> table
+                    | None -> failwith "please add a table"
+
+                let filter = appendFilters props.Filters
+                let! results = getResultsRecursivly filter azureTable
+                return [| for result in results ->
+                            let e = AzureTackleRowEntity(result)
+                            read e |]
+            with exn ->
+                return failwithf "ExecuteDirect failed with exn: %s" exn.Message
+        }
     let executeWithReflection<'a> (props: TableProps) =
         task {
             try

@@ -79,6 +79,40 @@ let simpleTest =
                     failwithf "no data exn :%s" exn.Message
               Expect.equal data (Some testData.[0]) "Insert test data is the same the readed testdata"
           }
+          testTask "Insert test data as batch to table and read data from the table directly" {
+              let testTable = getTable TestTable azAccount
+
+              let testData =
+                  [| { PartKey = "PartKey"
+                       RowKey = DateTime.UtcNow |> RowKey.toRowKey
+                       Date = DateTime.UtcNow |> System.DateTimeOffset
+                       Value = 0.2
+                       Exists = true
+                       Text = "isWorking" } |]
+
+              let tableMapper (testData: TestData) =
+                  DynamicTableEntity(testData.PartKey, testData.RowKey.GetValue)
+                  |> setDateTimeOffsetProperty "Date" testData.Date
+                  |> setDoubleProperty "Value" testData.Value
+                  |> setStringProperty "Text" testData.Text
+                  |> setBoolProperty "Exists" testData.Exists
+
+              let! _ = saveDataArrayBatch tableMapper testTable fileWriterConfig testData
+
+              let! values =
+                 AzureTable.connect connectionString
+                 |>AzureTable.table TestTable
+                 |> AzureTable.executeDirect (fun read ->
+                    { PartKey = read.partKey
+                      RowKey = read.rowKey
+                      Date = read.dateTimeOffset "Date"
+                      Exists = read.bool "Exists"
+                      Value = read.float "Value"
+                      Text= read.string "Text" })
+              let results = values |> Array.tryHead
+
+              Expect.equal results (Some testData.[0]) "Insert test data is the same the readed testdata"
+          }
            ]
 
 let config =
