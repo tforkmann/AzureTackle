@@ -62,6 +62,26 @@ let! values =
         Value = read.float "Value"
         Text = read.string "Text" })
 ```
+## Query a table inside a task and receive one value
+```fs
+open AzureTackle
+
+// get the connection from the environment
+let connectionString() = Env.getVar "app_db"
+
+type User = { Id: int; Username: string }
+
+let! value =
+    AzureTable.connect connectionString()
+    |> AzureTable.table testTable
+    |> AzureTable.filterReceive ("PartKey","RowKey")
+    |> AzureTable.receive (fun read ->
+    { PartKey = read.partKey
+        RowKey = read.rowKey
+        Date = read.dateTimeOffset "Date"
+        Value = read.float "Value"
+        Text = read.string "Text" })
+```
 
 ## Query a table inside a task with filter
 ```fs

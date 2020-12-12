@@ -6,7 +6,25 @@ open Microsoft.WindowsAzure.Storage.Table
 open FSharp.Control.Tasks.ContextInsensitive
 open TableReflection
 open System.Threading.Tasks
+
+module Filter =
+    type Operator =
+    | LessThen
+    | LessThenOrEqual
+    | GreaterThen
+    | GreaterThenOrEqual
+    | Equal
+    | NotEqual
+
+    type AzureFilter =
+        | Flt of string * Operator * float
+        | Txt of string * Operator * string
+        | Dtm of string * Operator * DateTime
+        | DtmO of string * Operator *  DateTimeOffset
+        | PaKey of Operator * string
+        | RoKey of Operator * string
 module Table =
+    open Filter
     type AzureAccount =
         { StorageAccount: CloudStorageAccount }
     type AzureConnection =
@@ -41,6 +59,17 @@ module Table =
             |> Async.AwaitTask
             |> Async.RunSynchronously
 
+    let receiveValue (partKey, rowKey) (table: CloudTable) =
+        task {
+            let query = TableOperation.Retrieve(partKey, rowKey)
+            let! r = table.ExecuteAsync(query)
+            let result = r.Result :?> DynamicTableEntity
+
+            if isNull result
+            then return None
+            else return Some result
+        }
+
     let getResultsRecursivly (filter: string option) (table: CloudTable) =
         task {
             let rec getResults token =
@@ -65,32 +94,20 @@ module Table =
             return! getResults null
         }
 
-type Operator =
-| LessThen
-| LessThenOrEqual
-| GreaterThen
-| GreaterThenOrEqual
-| Equal
-| NotEqual
 
-type AzureFilter =
-    | Flt of string * Operator * float
-    | Txt of string * Operator * string
-    | Dtm of string * Operator * DateTime
-    | DtmO of string * Operator *  DateTimeOffset
-    | PaKey of Operator * string
-    | RoKey of Operator * string
 
 [<RequireQualifiedAccess>]
 module AzureTable =
     open Table
+    open Filter
 
     type TableProps =
         { Filters: AzureFilter list
+          FilterReceive : (string * string) option
           AzureTable: CloudTable option
           AzureAccount : AzureAccount option }
 
-    let private defaultProps () = { Filters = []; AzureTable = None; AzureAccount = None}
+    let private defaultProps () = { Filters = []; FilterReceive = None; AzureTable = None; AzureAccount = None}
 
     let connect (connectionString: string) =
         let connection =  AzureConnection connectionString
@@ -104,12 +121,12 @@ module AzureTable =
         | None -> failwith "please use connect to initialize the Azure connection"
 
     let filter (filters: AzureFilter list) (props: TableProps) = { props with Filters = filters }
-
+    let filterReceive (partKey,rowKey) (props: TableProps) = { props with FilterReceive = Some (partKey,rowKey) }
     let appendFilters (filters: AzureFilter list) =
         let matchOperator operator=
             match operator with
             | LessThen -> QueryComparisons.LessThan
-            | LessThenOrEqual -> failwith "Not Implemented"
+            | LessThenOrEqual -> QueryComparisons.LessThanOrEqual
             | GreaterThen -> QueryComparisons.GreaterThan
             | GreaterThenOrEqual -> QueryComparisons.GreaterThanOrEqual
             | Equal -> QueryComparisons.Equal
@@ -129,6 +146,20 @@ module AzureTable =
             if r = "" then r + filterString else r + " and " + filterString) ""
         |> Some
 
+    let receive (read: AzureTackleRowEntity -> 't) (props: TableProps) =
+        task {
+            let azureTable =
+                match props.AzureTable with
+                | Some table -> table
+                | None -> failwith "please add a table"
+
+            let keys =
+                match props.FilterReceive with
+                | Some keys -> keys
+                | None -> failwith "please use filterReceive to set a the PartitionKey and RowKey"
+            let! result = receiveValue keys azureTable
+            return result |> Option.map AzureTackleRowEntity |> Option.map read
+        }
     let execute (read: AzureTackleRowEntity -> 't) (props: TableProps) =
         task {
             try
