@@ -1,3 +1,5 @@
+#### 0.2.1 - 2020-06-12
+* PaKey and RoKey
 #### 0.2.0 - 2020-06-12
 * RowKey instead of sortablerowkey
 #### 0.1.9 - 2020-06-12

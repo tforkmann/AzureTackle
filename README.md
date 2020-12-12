@@ -107,6 +107,6 @@ type AzureFilter =
     | Txt of string * Operator * string
     | Dtm of string * Operator * DateTime
     | DtmO of string * Operator *  DateTimeOffset
-    | PartKey of Operator * string
-    | RowKey of Operator * string
+    | PaKey of Operator * string
+    | RoKey of Operator * string
 ````
