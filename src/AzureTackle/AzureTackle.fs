@@ -7,6 +7,7 @@ open FSharp.Control.Tasks.ContextInsensitive
 open TableReflection
 open System.Threading.Tasks
 
+[<AutoOpen>]
 module Filter =
     type Operator =
     | LessThen
@@ -24,7 +25,6 @@ module Filter =
         | PaKey of Operator * string
         | RoKey of Operator * string
 module Table =
-    open Filter
     type AzureAccount =
         { StorageAccount: CloudStorageAccount }
     type AzureConnection =
@@ -99,7 +99,6 @@ module Table =
 [<RequireQualifiedAccess>]
 module AzureTable =
     open Table
-    open Filter
 
     type TableProps =
         { Filters: AzureFilter list
