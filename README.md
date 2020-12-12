@@ -28,7 +28,8 @@ let connectionString() = Env.getVar "app_db"
 type User = { Id: int; Username: string }
 
 let! values =
-    AzureTable.table testTable
+    AzureTable.connect connectionString()
+    |> AzureTable.table testTable
     |> AzureTable.execute (fun read ->
     { PartKey = read.partKey
         RowKey = read.rowKey
