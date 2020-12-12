@@ -1,3 +1,5 @@
+#### 0.2.5 - 2020-06-12
+* Make Shared accessable from Fable
 #### 0.2.4 - 2020-06-12
 * Add shared to work with Fable
 #### 0.2.3 - 2020-06-12
