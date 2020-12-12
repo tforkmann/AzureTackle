@@ -1,3 +1,5 @@
+#### 0.2.0 - 2020-06-12
+* RowKey instead of sortablerowkey
 #### 0.1.9 - 2020-06-12
 * try again
 #### 0.1.8 - 2020-06-12

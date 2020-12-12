@@ -79,7 +79,7 @@ type AzureFilter =
     | Dtm of string * Operator * DateTime
     | DtmO of string * Operator *  DateTimeOffset
     | PartKey of Operator * string
-    | SortableRowKey of Operator * string
+    | RowKey of Operator * string
 
 [<RequireQualifiedAccess>]
 module AzureTable =
@@ -124,7 +124,7 @@ module AzureTable =
                 | Dtm (fieldName,operator, value) -> TableQuery.GenerateFilterConditionForDate(fieldName, matchOperator operator, (value |> DateTimeOffset))
                 | DtmO (fieldName,operator, value) -> TableQuery.GenerateFilterConditionForDate(fieldName, matchOperator operator, value)
                 | PartKey (operator,value) -> TableQuery.GenerateFilterCondition("PartitionKey", matchOperator operator, value)
-                | SortableRowKey (operator,value) -> TableQuery.GenerateFilterCondition("RowKey", matchOperator operator, value)
+                | RowKey (operator,value) -> TableQuery.GenerateFilterCondition("RowKey", matchOperator operator, value)
 
             if r = "" then r + filterString else r + " and " + filterString) ""
         |> Some
