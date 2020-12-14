@@ -10,10 +10,10 @@ open System.Threading.Tasks
 [<AutoOpen>]
 module Filter =
     type Operator =
-    | LessThen
-    | LessThenOrEqual
-    | GreaterThen
-    | GreaterThenOrEqual
+    | LessThan
+    | LessThanOrEqual
+    | GreaterThan
+    | GreaterThanOrEqual
     | Equal
     | NotEqual
 
@@ -124,10 +124,10 @@ module AzureTable =
     let appendFilters (filters: AzureFilter list) =
         let matchOperator operator=
             match operator with
-            | LessThen -> QueryComparisons.LessThan
-            | LessThenOrEqual -> QueryComparisons.LessThanOrEqual
-            | GreaterThen -> QueryComparisons.GreaterThan
-            | GreaterThenOrEqual -> QueryComparisons.GreaterThanOrEqual
+            | LessThan -> QueryComparisons.LessThan
+            | LessThanOrEqual -> QueryComparisons.LessThanOrEqual
+            | GreaterThan -> QueryComparisons.GreaterThan
+            | GreaterThanOrEqual -> QueryComparisons.GreaterThanOrEqual
             | Equal -> QueryComparisons.Equal
             | NotEqual -> QueryComparisons.NotEqual
         filters
