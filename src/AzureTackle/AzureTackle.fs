@@ -24,6 +24,7 @@ module Filter =
         | DtmO of string * Operator *  DateTimeOffset
         | PaKey of Operator * string
         | RoKey of Operator * string
+
 module Table =
     type AzureAccount =
         { StorageAccount: CloudStorageAccount }
@@ -120,6 +121,7 @@ module AzureTable =
         | None -> failwith "please use connect to initialize the Azure connection"
 
     let filter (filters: AzureFilter list) (props: TableProps) = { props with Filters = filters }
+
     let filterReceive (partKey,rowKey) (props: TableProps) = { props with FilterReceive = Some (partKey,rowKey) }
     let appendFilters (filters: AzureFilter list) =
         let matchOperator operator=
@@ -190,6 +192,22 @@ module AzureTable =
             with exn ->
                 return failwithf "ExecuteDirect failed with exn: %s" exn.Message
         }
+    let insert (partKey,rowKey) (set: AzureTackleSetEntity -> DynamicTableEntity) (props: TableProps) =
+            task {
+                try
+                    let azureTable =
+                        match props.AzureTable with
+                        | Some table -> table
+                        | None -> failwith "please add a table"
+                    let entity =
+                        let e = AzureTackleSetEntity(partKey,rowKey)
+                        set e
+                    let operation = TableOperation.InsertOrReplace entity
+                    let! _ = azureTable.ExecuteAsync operation
+                    return Ok ()
+                with exn -> return Error exn
+            }
+
     let executeWithReflection<'a> (props: TableProps) =
         task {
             try

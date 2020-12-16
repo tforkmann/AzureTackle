@@ -84,24 +84,29 @@ let simpleTest =
               Expect.equal data (Some testData.[0]) "Insert test data is the same the readed testdata"
           }
           testTask "Insert test data as batch to table and read data from the table directly" {
-              let testTable = getTable TestTable azAccount
 
+              let azureCon =
+                    connectionString
+                    |> AzureTable.connect
               let testData =
-                  [| { PartKey = "PartKey"
+                     { PartKey = "PartKey"
                        RowKey = DateTime.UtcNow |> RowKey.toRowKey
                        Date = DateTime.UtcNow |> System.DateTimeOffset
                        Value = 0.2
                        Exists = true
-                       Text = "isWorking" } |]
+                       Text = "isWorking" }
 
-              let tableMapper (testData: TestData) =
-                  DynamicTableEntity(testData.PartKey, testData.RowKey.GetValue)
-                  |> setDateTimeOffsetProperty "Date" testData.Date
-                  |> setDoubleProperty "Value" testData.Value
-                  |> setStringProperty "Text" testData.Text
-                  |> setBoolProperty "Exists" testData.Exists
-
-              let! _ = saveDataArrayBatch tableMapper testTable fileWriterConfig testData
+              do!
+                  azureCon
+                  |> AzureTable.table TestTable
+                  |> AzureTable.insert
+                    (testData.PartKey, testData.RowKey)
+                        (fun set ->
+                            set.setDateTimeOffset ("Date",testData.Date) |> ignore
+                            set.setFloat ("Value",testData.Value) |> ignore
+                            set.setBool ("Exists",testData.Exists) |> ignore
+                            set.setString ("Text",testData.Text)
+                            )
 
               let! values =
                   AzureTable.connect connectionString
@@ -116,7 +121,7 @@ let simpleTest =
 
               let results = values |> Array.tryHead
 
-              Expect.equal results (Some testData.[0]) "Insert test data is the same the readed testdata"
+              Expect.equal results (Some testData) "Insert test data is the same the readed testdata"
           }
           testTask "Insert test data as batch to table and receive exactly one value from the table" {
               let testTable = getTable TestTable azAccount
