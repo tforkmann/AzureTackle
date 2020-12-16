@@ -93,7 +93,8 @@ let connectionString() = Env.getVar "app_db"
 type User = { Id: int; Username: string }
 
 let! values =
-    AzureTable.connect connectionString()
+    connectionString()
+    |> AzureTable.connect 
     |> AzureTable.table testTable
     |> AzureTable.filter [DtmO ("Date",GreaterThenOrEqual, timeModel.DateStart);DtmO ("Date",LessThen, timeModel.DateEnd)]
     |> AzureTable.execute (fun read ->
@@ -109,6 +110,59 @@ let data =
     | Error (exn:Exception) ->
         failwithf "no data exn :%s" exn.Message        
 ```
+
+## Query a table inside a task with filter
+```fs
+open AzureTackle
+
+// get the connection from the environment
+let connectionString() = Env.getVar "app_db"
+
+type User = { Id: int; Username: string }
+
+let! values =
+    connectionString()
+    |> AzureTable.connect 
+    |> AzureTable.table testTable
+    |> AzureTable.filter [DtmO ("Date",GreaterThanOrEqual, timeModel.DateStart);DtmO ("Date",LessThan, timeModel.DateEnd)]
+    |> AzureTable.execute (fun read ->
+    { PartKey = read.partKey
+        RowKey = read.rowKey
+        Date = read.dateTimeOffset "Date"
+        Value = read.float "Value"
+        Text = read.string "Text" })
+let data =
+    values
+    |> function
+    | Ok r -> r |> Array.tryHead
+    | Error (exn:Exception) ->
+        failwithf "no data exn :%s" exn.Message        
+```
+## Insert testData into a table
+
+```fs
+    let testData =
+        {   PartKey = "PartKey"
+            RowKey = DateTime.UtcNow |> RowKey.toRowKey
+            Date = DateTime.UtcNow |> System.DateTimeOffset
+            Value = 0.2
+            Exists = true
+            Text = "isWorking" }
+
+    do!
+    connectionString()
+    |> AzureTable.connect 
+    |> AzureTable.table TestTable
+    |> AzureTable.insert
+    (testData.PartKey, testData.RowKey)
+        (fun set ->
+            set.setDateTimeOffset ("Date",testData.Date) |> ignore
+            set.setFloat ("Value",testData.Value) |> ignore
+            set.setBool ("Exists",testData.Exists) |> ignore
+            set.setString ("Text",testData.Text)
+            )
+```
+
 ## Available Operator
 ```fs
 type Operator =
