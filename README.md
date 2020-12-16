@@ -1,6 +1,6 @@
 # AzureTackle
 
-Functional wrapper around WindowsAzure.Storage SKD `AzureTackle` to simplify data access when talking to Azure tables.
+Functional wrapper around WindowsAzure.Storage SDK. `AzureTackle` simplifies the data access when talking to Azure tables.
 
 ## Available Packages:
 
@@ -24,14 +24,19 @@ open AzureTackle
 
 // get the connection from the environment
 let connectionString() = Env.getVar "app_db"
-
-type User = { Id: int; Username: string }
+type TestData =
+    { PartKey: string
+      RowKey: RowKey
+      Date: DateTimeOffset
+      Exists: bool
+      Value: float
+      Text: string }
 
 let! values =
     AzureTable.connect connectionString()
     |> AzureTable.table testTable
     |> AzureTable.execute (fun read ->
-    { PartKey = read.partKey
+    {   PartKey = read.partKey
         RowKey = read.rowKey
         Date = read.dateTimeOffset "Date"
         Value = read.float "Value"
@@ -50,13 +55,19 @@ open AzureTackle
 // get the connection from the environment
 let connectionString() = Env.getVar "app_db"
 
-type User = { Id: int; Username: string }
+type TestData =
+    { PartKey: string
+      RowKey: RowKey
+      Date: DateTimeOffset
+      Exists: bool
+      Value: float
+      Text: string }
 
 let! values =
     AzureTable.connect connectionString()
     |> AzureTable.table testTable
     |> AzureTable.executeDirect (fun read ->
-    { PartKey = read.partKey
+    {   PartKey = read.partKey
         RowKey = read.rowKey
         Date = read.dateTimeOffset "Date"
         Value = read.float "Value"
@@ -69,14 +80,21 @@ open AzureTackle
 // get the connection from the environment
 let connectionString() = Env.getVar "app_db"
 
-type User = { Id: int; Username: string }
+type TestData =
+    { PartKey: string
+      RowKey: RowKey
+      Date: DateTimeOffset
+      Exists: bool
+      Value: float
+      Text: string }
 
 let! value =
-    AzureTable.connect connectionString()
+    connectionString()
+    |> AzureTable.connect 
     |> AzureTable.table testTable
     |> AzureTable.filterReceive ("PartKey","RowKey")
     |> AzureTable.receive (fun read ->
-    { PartKey = read.partKey
+    {   PartKey = read.partKey
         RowKey = read.rowKey
         Date = read.dateTimeOffset "Date"
         Value = read.float "Value"
@@ -90,7 +108,13 @@ open AzureTackle
 // get the connection from the environment
 let connectionString() = Env.getVar "app_db"
 
-type User = { Id: int; Username: string }
+type TestData =
+    { PartKey: string
+      RowKey: RowKey
+      Date: DateTimeOffset
+      Exists: bool
+      Value: float
+      Text: string }
 
 let! values =
     connectionString()
@@ -98,7 +122,7 @@ let! values =
     |> AzureTable.table testTable
     |> AzureTable.filter [DtmO ("Date",GreaterThenOrEqual, timeModel.DateStart);DtmO ("Date",LessThen, timeModel.DateEnd)]
     |> AzureTable.execute (fun read ->
-    { PartKey = read.partKey
+    {   PartKey = read.partKey
         RowKey = read.rowKey
         Date = read.dateTimeOffset "Date"
         Value = read.float "Value"
@@ -118,15 +142,20 @@ open AzureTackle
 // get the connection from the environment
 let connectionString() = Env.getVar "app_db"
 
-type User = { Id: int; Username: string }
-
+type TestData =
+    { PartKey: string
+      RowKey: RowKey
+      Date: DateTimeOffset
+      Exists: bool
+      Value: float
+      Text: string }
 let! values =
     connectionString()
     |> AzureTable.connect 
     |> AzureTable.table testTable
     |> AzureTable.filter [DtmO ("Date",GreaterThanOrEqual, timeModel.DateStart);DtmO ("Date",LessThan, timeModel.DateEnd)]
     |> AzureTable.execute (fun read ->
-    { PartKey = read.partKey
+    {   PartKey = read.partKey
         RowKey = read.rowKey
         Date = read.dateTimeOffset "Date"
         Value = read.float "Value"

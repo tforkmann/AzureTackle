@@ -96,7 +96,8 @@ let simpleTest =
                             )
 
               let! values =
-                  AzureTable.connect connectionString
+                  connectionString
+                  |> AzureTable.connect
                   |> AzureTable.table TestTable
                   |> AzureTable.executeDirect (fun read ->
                       { PartKey = read.partKey
