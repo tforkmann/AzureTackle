@@ -195,10 +195,10 @@ let data =
 ## Available Operator
 ```fs
 type Operator =
-    | LessThen
-    | LessThenOrEqual
-    | GreaterThen
-    | GreaterThenOrEqual
+    | LessThan
+    | LessThanOrEqual
+    | GreaterThan
+    | GreaterThanOrEqual
     | Equal
     | NotEqual
 ```
