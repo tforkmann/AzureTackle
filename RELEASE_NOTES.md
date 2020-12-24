@@ -1,3 +1,5 @@
+#### 0.2.9 - 2020-12-24
+* Add tableCreate to create new table and use table only for existing tables
 #### 0.2.8 - 2020-12-16
 * Get rid of Chia dependency
 #### 0.2.7 - 2020-12-16

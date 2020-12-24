@@ -44,6 +44,21 @@ module Table =
                         let msg =
                             sprintf "Could not get TableReference %s" exn.Message
                         failwith msg
+                return table
+            }
+            |> Async.AwaitTask
+            |> Async.RunSynchronously
+    let getAndCreateTable tableName (azConnection:AzureAccount) =
+            task {
+                let client = azConnection.StorageAccount.CreateCloudTableClient()
+
+                let table =
+                    try
+                        client.GetTableReference tableName
+                    with exn ->
+                        let msg =
+                            sprintf "Could not get TableReference %s" exn.Message
+                        failwith msg
                 /// Azure will temporarily lock table names after deleting and can take some time before the table name is made available again.
                 let rec createTableSafe() =
                     task {
@@ -118,6 +133,12 @@ module AzureTable =
         | Some azureAccount ->
             { props with
                 AzureTable = Some (getTable tableName azureAccount) }
+        | None -> failwith "please use connect to initialize the Azure connection"
+    let newTable tableName (props: TableProps) =
+        match props.AzureAccount with
+        | Some azureAccount ->
+            { props with
+                AzureTable = Some (getAndCreateTable tableName azureAccount) }
         | None -> failwith "please use connect to initialize the Azure connection"
 
     let filter (filters: AzureFilter list) (props: TableProps) = { props with Filters = filters }
