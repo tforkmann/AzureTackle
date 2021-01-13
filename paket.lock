@@ -107,7 +107,11 @@ NUGET
       Fable.Core (>= 3.0)
       Fable.Elmish (>= 3.0)
       FSharp.Core (>= 4.6.2)
+<<<<<<< HEAD
     EPPlus (5.5.1)
+=======
+    EPPlus (5.5)
+>>>>>>> f5172029fb8d284d248afb0697b88c20f9156a4b
       Microsoft.Extensions.Configuration.Json (>= 5.0)
       Microsoft.IO.RecyclableMemoryStream (>= 1.3.6)
       System.ComponentModel.Annotations (>= 5.0)
@@ -152,8 +156,13 @@ NUGET
       Fable.Browser.Event (>= 1.2.1)
       Fable.Core (>= 3.0)
       FSharp.Core (>= 4.7)
+<<<<<<< HEAD
     Fable.Core (3.2.3)
       FSharp.Core (>= 4.7.2)
+=======
+    Fable.Core (3.2.2)
+      FSharp.Core (>= 4.7)
+>>>>>>> f5172029fb8d284d248afb0697b88c20f9156a4b
     Fable.Elmish (3.1)
       Fable.Core (>= 3.0)
       FSharp.Core (>= 4.6.2)
@@ -172,10 +181,17 @@ NUGET
       Fable.Browser.XMLHttpRequest (>= 1.1)
       Fable.Core (>= 3.0)
       FSharp.Core (>= 4.6.2)
+<<<<<<< HEAD
     Farmer (1.3.2)
       FSharp.Core (>= 4.7.1)
       Newtonsoft.Json (>= 12.0.2)
     Feliz (1.32)
+=======
+    Farmer (1.3.1)
+      FSharp.Core (>= 4.7.1)
+      Newtonsoft.Json (>= 12.0.2)
+    Feliz (1.31.1)
+>>>>>>> f5172029fb8d284d248afb0697b88c20f9156a4b
       Fable.Core (>= 3.1.5)
       Fable.React (>= 7.0.1)
       Feliz.CompilerPlugins (>= 1.2)
