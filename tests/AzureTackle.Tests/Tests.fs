@@ -44,10 +44,11 @@ let simpleTest =
                   |> AzureTable.insert
                     (testData.PartKey, testData.RowKey)
                         (fun set ->
-                            set.setDateTimeOffset ("Date",testData.Date) |> ignore
-                            set.setFloat ("Value",testData.Value) |> ignore
-                            set.setBool ("Exists",testData.Exists) |> ignore
-                            set.setString ("Text",testData.Text) )
+                            set.setDateTimeOffset ("Date",testData.Date)
+                            set.setFloat ("Value",testData.Value)
+                            set.setBool ("Exists",testData.Exists)
+                            set.setString ("Text",testData.Text)
+                            set.returnEntity )
 
               let! values =
                   azureCon
@@ -89,10 +90,11 @@ let simpleTest =
                   |> AzureTable.insert
                     (testData.PartKey, testData.RowKey)
                         (fun set ->
-                            set.setDateTimeOffset ("Date",testData.Date) |> ignore
-                            set.setFloat ("Value",testData.Value) |> ignore
-                            set.setBool ("Exists",testData.Exists) |> ignore
+                            set.setDateTimeOffset ("Date",testData.Date)
+                            set.setFloat ("Value",testData.Value)
+                            set.setBool ("Exists",testData.Exists)
                             set.setString ("Text",testData.Text)
+                            set.returnEntity
                             )
 
               let! values =
@@ -128,10 +130,11 @@ let simpleTest =
                   |> AzureTable.insert
                     (testData.PartKey, testData.RowKey)
                         (fun set ->
-                            set.setDateTimeOffset ("Date",testData.Date) |> ignore
-                            set.setFloat ("Value",testData.Value) |> ignore
-                            set.setBool ("Exists",testData.Exists) |> ignore
-                            set.setString ("Text",testData.Text) )
+                            set.setDateTimeOffset ("Date",testData.Date)
+                            set.setFloat ("Value",testData.Value)
+                            set.setBool ("Exists",testData.Exists)
+                            set.setString ("Text",testData.Text)
+                            set.returnEntity )
 
 
               let! value =

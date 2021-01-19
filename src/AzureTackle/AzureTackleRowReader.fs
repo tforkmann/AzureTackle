@@ -257,40 +257,49 @@ type AzureTackleRowEntity(entity: DynamicTableEntity) =
                     entity.RowKey
                     exn.Message
 
-type AzureTackleSetEntity(partKey,rowKey:RowKey) =
-    let entity = DynamicTableEntity(partKey, rowKey.GetValue)
-    member __.setString(propName: string, value: string): DynamicTableEntity =
+type AzureTackleSetEntity(partKey, rowKey: RowKey) =
+    let entity =
+        DynamicTableEntity(partKey, rowKey.GetValue)
+
+    member __.returnEntity =
+        entity
+    member __.setString(propName: string, value: string) =
         entity.Properties.[propName] <- EntityProperty.GeneratePropertyForString value
-        entity
-    member this.setStringOrNone(propName: string, value: string option) : DynamicTableEntity =
-            match value with
-            | Some x -> this.setString (propName,x)
-            | None -> entity
-    member __.setInt(propName: string, value: int): DynamicTableEntity =
+
+    member this.setStringOrNone(propName: string, value: string option) =
+        match value with
+        | Some x -> this.setString (propName, x)
+        | None -> ()
+
+    member __.setInt(propName: string, value: int) =
         entity.Properties.[propName] <- EntityProperty.GeneratePropertyForInt value
-        entity
-    member this.setIntOrNone(propName: string, value: int option) : DynamicTableEntity =
-            match value with
-            | Some x -> this.setInt (propName,x)
-            | None -> entity
-    member __.setFloat(propName: string, value: float): DynamicTableEntity =
+        ()
+
+    member this.setIntOrNone(propName: string, value: int option) =
+        match value with
+        | Some x -> this.setInt (propName, x)
+        | None -> ()
+
+    member __.setFloat(propName: string, value: float) =
         entity.Properties.[propName] <- EntityProperty.GeneratePropertyForDouble value
-        entity
-    member this.setFloatOrNone(propName: string, value: float option) : DynamicTableEntity =
-            match value with
-            | Some x -> this.setFloat (propName,x)
-            | None -> entity
-    member __.setDateTimeOffset(propName: string, value: DateTimeOffset): DynamicTableEntity =
+
+    member this.setFloatOrNone(propName: string, value: float option) =
+        match value with
+        | Some x -> this.setFloat (propName, x)
+        | None -> ()
+
+    member __.setDateTimeOffset(propName: string, value: DateTimeOffset) =
         entity.Properties.[propName] <- EntityProperty.GeneratePropertyForDateTimeOffset value
-        entity
-    member this.setDateTimeOffsetOrNone(propName: string, value: DateTimeOffset option) : DynamicTableEntity =
-            match value with
-            | Some x -> this.setDateTimeOffset (propName,x)
-            | None -> entity
-    member __.setBool(propName: string, value: bool): DynamicTableEntity =
+
+    member this.setDateTimeOffsetOrNone(propName: string, value: DateTimeOffset option) =
+        match value with
+        | Some x -> this.setDateTimeOffset (propName, x)
+        | None -> ()
+
+    member __.setBool(propName: string, value: bool) =
         entity.Properties.[propName] <- EntityProperty.GeneratePropertyForBool value
-        entity
-    member this.setBoolOrNone(propName: string, value: bool option) : DynamicTableEntity =
-            match value with
-            | Some x -> this.setBool (propName,x)
-            | None -> entity
+
+    member this.setBoolOrNone(propName: string, value: bool option) =
+        match value with
+        | Some x -> this.setBool (propName, x)
+        | None -> ()
