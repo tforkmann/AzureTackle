@@ -1,3 +1,5 @@
+#### 0.3.6- 2021-01-20
+* only netcoreapp3.1 try again
 #### 0.3.5- 2021-01-20
 * only netcoreapp3.1 try again
 #### 0.3.4- 2021-01-20
