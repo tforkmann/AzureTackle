@@ -2,10 +2,10 @@
 
 GROUP AzureTackle
 STORAGE: NONE
-RESTRICTION: == netcoreapp3.1
+RESTRICTION: || (== net50) (== netcoreapp3.1)
 NUGET
   remote: https://api.nuget.org/v3/index.json
-    FSharp.Core (4.7.2)
+    FSharp.Core (5.0)
     Microsoft.NETCore.Platforms (5.0)
     NETStandard.Library (2.0.3)
       Microsoft.NETCore.Platforms (>= 1.1)
