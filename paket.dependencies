@@ -1,8 +1,8 @@
 group AzureTackle
   storage: none
   source https://api.nuget.org/v3/index.json
-  frameworks: netcoreapp3.1
-  nuget FSharp.Core == 4.7.2
+  frameworks: net5.0,netcoreapp3.1
+  nuget FSharp.Core == 5.0.0
   nuget TaskBuilder.fs
   nuget WindowsAzure.Storage
 group Test
