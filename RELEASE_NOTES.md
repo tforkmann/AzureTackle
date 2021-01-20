@@ -1,3 +1,5 @@
+#### 0.3.8- 2021-01-20
+* only netcoreapp3.1 try again fix fsharp core
 #### 0.3.7- 2021-01-20
 * bring back Net5
 #### 0.3.6- 2021-01-20
