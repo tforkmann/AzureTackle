@@ -1,3 +1,5 @@
+#### 0.4.1- 2021-01-21
+* don't use brackets for set functions
 #### 0.4.0- 2021-01-21
 * Add insertCustomRowKey
 #### 0.3.9- 2021-01-20

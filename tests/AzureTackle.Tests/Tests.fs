@@ -44,10 +44,10 @@ let simpleTest =
                   |> AzureTable.insert
                     (testData.PartKey, testData.RowKey)
                         (fun set ->
-                            set.setDateTimeOffset ("Date",testData.Date)
-                            set.setFloat ("Value",testData.Value)
-                            set.setBool ("Exists",testData.Exists)
-                            set.setString ("Text",testData.Text)
+                            set.setDateTimeOffset "Date" testData.Date
+                            set.setFloat "Value" testData.Value
+                            set.setBool "Exists"testData.Exists
+                            set.setString "Text" testData.Text
                             set.returnEntity )
 
               let! values =
@@ -90,10 +90,10 @@ let simpleTest =
                   |> AzureTable.insert
                     (testData.PartKey, testData.RowKey)
                         (fun set ->
-                            set.setDateTimeOffset ("Date",testData.Date)
-                            set.setFloat ("Value",testData.Value)
-                            set.setBool ("Exists",testData.Exists)
-                            set.setString ("Text",testData.Text)
+                            set.setDateTimeOffset "Date" testData.Date
+                            set.setFloat "Value" testData.Value
+                            set.setBool "Exists" testData.Exists
+                            set.setString "Text" testData.Text
                             set.returnEntity
                             )
 
@@ -130,10 +130,10 @@ let simpleTest =
                   |> AzureTable.insert
                     (testData.PartKey, testData.RowKey)
                         (fun set ->
-                            set.setDateTimeOffset ("Date",testData.Date)
-                            set.setFloat ("Value",testData.Value)
-                            set.setBool ("Exists",testData.Exists)
-                            set.setString ("Text",testData.Text)
+                            set.setDateTimeOffset "Date" testData.Date
+                            set.setFloat "Value" testData.Value
+                            set.setBool "Exists" testData.Exists
+                            set.setString "Text" testData.Text
                             set.returnEntity )
 
 
