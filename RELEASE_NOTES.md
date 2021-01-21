@@ -1,24 +1,26 @@
-#### 0.4.3- 2021-01-21
+#### 0.4.4 - 2021-01-21
+* always try to create new table if not existing
+#### 0.4.3 - 2021-01-21
 * add delete operation
-#### 0.4.2- 2021-01-21
+#### 0.4.2 - 2021-01-21
 * get rid of set bc of doublication
-#### 0.4.1- 2021-01-21
+#### 0.4.1 - 2021-01-21
 * don't use brackets for set functions
-#### 0.4.0- 2021-01-21
+#### 0.4.0 - 2021-01-21
 * Add insertCustomRowKey
-#### 0.3.9- 2021-01-20
+#### 0.3.9 - 2021-01-20
 * bring back Net5
-#### 0.3.8- 2021-01-20
+#### 0.3.8 - 2021-01-20
 * only netcoreapp3.1 try again fix fsharp core
-#### 0.3.7- 2021-01-20
+#### 0.3.7 - 2021-01-20
 * bring back Net5
-#### 0.3.6- 2021-01-20
+#### 0.3.6 - 2021-01-20
 * only netcoreapp3.1 try again
-#### 0.3.5- 2021-01-20
+#### 0.3.5 - 2021-01-20
 * only netcoreapp3.1 try again
-#### 0.3.4- 2021-01-20
+#### 0.3.4 - 2021-01-20
 * only netcoreapp3.1 try again
-#### 0.3.3- 2021-01-20
+#### 0.3.3 - 2021-01-20
 * only netcoreapp3.1
 #### 0.3.2 - 2021-01-19
 * Optimize Set entity

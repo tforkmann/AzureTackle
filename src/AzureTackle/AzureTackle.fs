@@ -132,12 +132,6 @@ module AzureTable =
         match props.AzureAccount with
         | Some azureAccount ->
             { props with
-                AzureTable = Some (getTable tableName azureAccount) }
-        | None -> failwith "please use connect to initialize the Azure connection"
-    let newTable tableName (props: TableProps) =
-        match props.AzureAccount with
-        | Some azureAccount ->
-            { props with
                 AzureTable = Some (getAndCreateTable tableName azureAccount) }
         | None -> failwith "please use connect to initialize the Azure connection"
 
