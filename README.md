@@ -191,7 +191,7 @@ let data =
             set.string ("Text",testData.Text)
             )
 ```
-## Delete entities from a table
+## Delete one entity from a table
 
 ```fs
 
