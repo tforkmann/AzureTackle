@@ -213,7 +213,22 @@ module AzureTable =
             with exn ->
                 return failwithf "ExecuteDirect failed with exn: %s" exn.Message
         }
-    let insert (partKey,rowKey) (set: AzureTackleSetEntity -> DynamicTableEntity) (props: TableProps) =
+    let insert (partKey,rowKey:RowKey) (set: AzureTackleSetEntity -> DynamicTableEntity) (props: TableProps) =
+            task {
+                try
+                    let azureTable =
+                        match props.AzureTable with
+                        | Some table -> table
+                        | None -> failwith "please add a table"
+                    let entity =
+                        let e = AzureTackleSetEntity(partKey,rowKey.GetValue)
+                        set e
+                    let operation = TableOperation.InsertOrReplace entity
+                    let! _ = azureTable.ExecuteAsync operation
+                    return Ok ()
+                with exn -> return Error exn
+            }
+    let insertCustomRowKey (partKey,rowKey) (set: AzureTackleSetEntity -> DynamicTableEntity) (props: TableProps) =
             task {
                 try
                     let azureTable =

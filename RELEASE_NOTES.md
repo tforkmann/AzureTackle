@@ -1,5 +1,7 @@
+#### 0.4.0- 2021-01-21
+* Add insertCustomRowKey
 #### 0.3.9- 2021-01-20
-*bring back Net5
+* bring back Net5
 #### 0.3.8- 2021-01-20
 * only netcoreapp3.1 try again fix fsharp core
 #### 0.3.7- 2021-01-20

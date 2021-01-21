@@ -257,9 +257,9 @@ type AzureTackleRowEntity(entity: DynamicTableEntity) =
                     entity.RowKey
                     exn.Message
 
-type AzureTackleSetEntity(partKey, rowKey: RowKey) =
+type AzureTackleSetEntity(partKey, rowKey: string) =
     let entity =
-        DynamicTableEntity(partKey, rowKey.GetValue)
+        DynamicTableEntity(partKey, rowKey)
 
     member __.returnEntity =
         entity
