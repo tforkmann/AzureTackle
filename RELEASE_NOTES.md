@@ -1,3 +1,5 @@
+#### 0.4.2- 2021-01-21
+* get rid of set bc of doublication
 #### 0.4.1- 2021-01-21
 * don't use brackets for set functions
 #### 0.4.0- 2021-01-21

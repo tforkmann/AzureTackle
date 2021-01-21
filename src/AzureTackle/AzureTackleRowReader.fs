@@ -262,43 +262,43 @@ type AzureTackleSetEntity(partKey, rowKey: string) =
 
     member __.returnEntity = entity
 
-    member __.setString (propName: string) (value: string) =
+    member __.string (propName: string) (value: string) =
         entity.Properties.[propName] <- EntityProperty.GeneratePropertyForString value
 
-    member this.setStringOrNone (propName: string) (value: string option) =
+    member this.stringOrNone (propName: string) (value: string option) =
         match value with
-        | Some x -> this.setString propName x
+        | Some x -> this.string propName x
         | None -> ()
 
-    member __.setInt (propName: string) (value: int) =
+    member __.int (propName: string) (value: int) =
         entity.Properties.[propName] <- EntityProperty.GeneratePropertyForInt value
         ()
 
-    member this.setIntOrNone (propName: string) (value: int option) =
+    member this.intOrNone (propName: string) (value: int option) =
         match value with
-        | Some x -> this.setInt propName x
+        | Some x -> this.int propName x
         | None -> ()
 
-    member __.setFloat (propName: string) (value: float) =
+    member __.float (propName: string) (value: float) =
         entity.Properties.[propName] <- EntityProperty.GeneratePropertyForDouble value
 
-    member this.setFloatOrNone (propName: string) (value: float option) =
+    member this.floatOrNone (propName: string) (value: float option) =
         match value with
-        | Some x -> this.setFloat propName x
+        | Some x -> this.float propName x
         | None -> ()
 
-    member __.setDateTimeOffset (propName: string) (value: DateTimeOffset) =
+    member __.dateTimeOffset (propName: string) (value: DateTimeOffset) =
         entity.Properties.[propName] <- EntityProperty.GeneratePropertyForDateTimeOffset value
 
-    member this.setDateTimeOffsetOrNone (propName: string) (value: DateTimeOffset option) =
+    member this.dateTimeOffsetOrNone (propName: string) (value: DateTimeOffset option) =
         match value with
-        | Some x -> this.setDateTimeOffset propName x
+        | Some x -> this.dateTimeOffset propName x
         | None -> ()
 
-    member __.setBool (propName: string) (value: bool) =
+    member __.bool (propName: string) (value: bool) =
         entity.Properties.[propName] <- EntityProperty.GeneratePropertyForBool value
 
-    member this.setBoolOrNone (propName: string) (value: bool option) =
+    member this.boolOrNone (propName: string) (value: bool option) =
         match value with
-        | Some x -> this.setBool propName x
+        | Some x -> this.bool propName x
         | None -> ()
