@@ -185,11 +185,21 @@ let data =
     |> AzureTable.insert
     (testData.PartKey, testData.RowKey)
         (fun set ->
-            set.setDateTimeOffset ("Date",testData.Date) |> ignore
-            set.setFloat ("Value",testData.Value) |> ignore
-            set.setBool ("Exists",testData.Exists) |> ignore
-            set.setString ("Text",testData.Text)
+            set.dateTimeOffset ("Date",testData.Date) |> ignore
+            set.float ("Value",testData.Value) |> ignore
+            set.bool ("Exists",testData.Exists) |> ignore
+            set.string ("Text",testData.Text)
             )
+```
+## Delete entities from a table
+
+```fs
+
+    do!
+        connectionString()
+        |> AzureTable.connect 
+        |> AzureTable.table TestTable
+        |> AzureTable.delete ("partKey", "rowKey")
 ```
 
 ## Available Operator
