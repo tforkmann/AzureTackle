@@ -243,6 +243,27 @@ module AzureTable =
                     return Ok ()
                 with exn -> return Error exn
             }
+    let delete (partKey,rowKey:string) (props: TableProps) =
+            task {
+                try
+                    let azureTable =
+                        match props.AzureTable with
+                        | Some table -> table
+                        | None -> failwith "please add a table"
+                    let! retrieveOp =
+                            TableOperation.Retrieve(partKey,rowKey)
+                            |> azureTable.ExecuteAsync
+
+                    let result = retrieveOp.Result :?> DynamicTableEntity
+                    if isNull result then
+                        return Error (exn (sprintf "no entity existent for partKey %s rowKey %s"rowKey partKey))
+                    else
+
+                        let delete = TableOperation.Delete(result)
+                        let! _ = azureTable.ExecuteAsync(delete)
+                        return Ok ()
+                with exn -> return Error exn
+            }
 
     let executeWithReflection<'a> (props: TableProps) =
         task {
