@@ -1,3 +1,5 @@
+#### 0.4.5 - 2021-02-22
+* update packages
 #### 0.4.4 - 2021-01-21
 * always try to create new table if not existing
 #### 0.4.3 - 2021-01-21
