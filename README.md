@@ -2,14 +2,14 @@
 
 Functional wrapper around WindowsAzure.Storage SDK. `AzureTackle` simplifies the data access when talking to Azure tables.
 
-## Available Packages:
+## Available Packages
 
 | Library  | Version |
 | ------------- | ------------- |
 | AzureTackle  | [![nuget - AzureTackle](https://img.shields.io/nuget/v/AzureTackle.svg?colorB=green)](hhttps://www.nuget.org/packages/AzureTackle/) |
 
-
 ## Install
+
 ```bash
 # nuget client
 dotnet add package AzureTackle
@@ -19,6 +19,7 @@ paket add AzureTackle --project path/to/project.fsproj
 ```
 
 ## Query a table inside a task
+
 ```fs
 open AzureTackle
 
@@ -48,7 +49,9 @@ let data =
     | Error (exn:Exception) ->
         failwithf "no data exn :%s" exn.Message        
 ```
+
 ## Query a table inside a task and directly receive the results
+
 ```fs
 open AzureTackle
 
@@ -73,7 +76,9 @@ let! values =
         Value = read.float "Value"
         Text = read.string "Text" })
 ```
+
 ## Query a table inside a task and receive one value
+
 ```fs
 open AzureTackle
 
@@ -102,6 +107,7 @@ let! value =
 ```
 
 ## Query a table inside a task with filter
+
 ```fs
 open AzureTackle
 
@@ -135,38 +141,6 @@ let data =
         failwithf "no data exn :%s" exn.Message        
 ```
 
-## Query a table inside a task with filter
-```fs
-open AzureTackle
-
-// get the connection from the environment
-let connectionString() = Env.getVar "app_db"
-
-type TestData =
-    { PartKey: string
-      RowKey: RowKey
-      Date: DateTimeOffset
-      Exists: bool
-      Value: float
-      Text: string }
-let! values =
-    connectionString()
-    |> AzureTable.connect 
-    |> AzureTable.table testTable
-    |> AzureTable.filter [DtmO ("Date",GreaterThanOrEqual, timeModel.DateStart);DtmO ("Date",LessThan, timeModel.DateEnd)]
-    |> AzureTable.execute (fun read ->
-    {   PartKey = read.partKey
-        RowKey = read.rowKey
-        Date = read.dateTimeOffset "Date"
-        Value = read.float "Value"
-        Text = read.string "Text" })
-let data =
-    values
-    |> function
-    | Ok r -> r |> Array.tryHead
-    | Error (exn:Exception) ->
-        failwithf "no data exn :%s" exn.Message        
-```
 ## Insert testData into a table
 
 ```fs
@@ -191,6 +165,7 @@ let data =
             set.string ("Text",testData.Text)
             )
 ```
+
 ## Delete one entity from a table
 
 ```fs
@@ -203,6 +178,7 @@ let data =
 ```
 
 ## Available Operator
+
 ```fs
 type Operator =
     | LessThan
@@ -214,6 +190,7 @@ type Operator =
 ```
 
 ## Available AzureFilter
+
 ```fs
 type AzureFilter =
     | Flt of string * Operator * float
@@ -222,4 +199,16 @@ type AzureFilter =
     | DtmO of string * Operator *  DateTimeOffset
     | PaKey of Operator * string
     | RoKey of Operator * string
-````
+```
+
+## Backup your data
+
+The only thing you have to do is to create a new storage account and connect it like this.
+
+```fs
+let azureCon =
+    (connectionString,connectionStringBackup)
+    |> AzureTable.connectWithBackup
+```
+
+All you Azure table operations will then be mirrowed to the backup storage account
