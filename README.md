@@ -211,4 +211,4 @@ let azureCon =
     |> AzureTable.connectWithBackup
 ```
 
-All you Azure table operations will then be mirrowed to the backup storage account
+All your Azure table operations will then be mirrowed to the backup storage account
