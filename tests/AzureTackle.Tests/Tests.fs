@@ -34,7 +34,6 @@ let simpleTest =
                        Value = 0.2
                        Exists = true
                        Text = "isWorking" }
-
               do!
                   azureCon
                   |> AzureTable.table TestTable

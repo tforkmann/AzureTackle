@@ -42,7 +42,8 @@ module Table =
             let table =
                 try
                     client.GetTableReference tableName
-                with exn ->
+                with
+                | exn ->
                     let msg =
                         sprintf "Could not get TableReference %s" exn.Message
 
@@ -61,10 +62,13 @@ module Table =
             let table =
                 try
                     client.GetTableReference tableName
-                with exn ->
+                with
+                | exn ->
+
                     let msg =
                         sprintf "Could not get TableReference %s" exn.Message
 
+                    printfn "Could not get TableReference %s" exn.Message
                     failwith msg
             /// Azure will temporarily lock table names after deleting and can take some time before the table name is made available again.
             let rec createTableSafe () =
@@ -72,12 +76,15 @@ module Table =
                     try
                         let! _ = table.CreateIfNotExistsAsync()
                         ()
-                    with _ ->
+                    with
+                    | exn ->
+                        printfn "Error in creating %s" exn.Message
                         do! Task.Delay 5000
                         return! createTableSafe ()
                 }
 
             do! createTableSafe ()
+            printfn "created table..."
             return table
         }
         |> Async.AwaitTask
@@ -181,38 +188,50 @@ module AzureTable =
                         Backup = Some initAzConfigBackup } }
 
     let table tableName (props: TableProps) =
-        let newStorageOption =
-            match props.StorageOption with
-            | Some storageOption ->
-                match storageOption.Backup with
-                | Some backup ->
-                    match backup.AzureAccount, storageOption.Normal.AzureAccount with
-                    | Some backUpAcc, Some normalAcc ->
-                        { storageOption with
-                              Backup =
-                                  Some
-                                      { backup with
-                                            AzureTable = Some(getAndCreateTable tableName backUpAcc)
-                                            TableName = Some tableName }
-                              Normal =
-                                  { storageOption.Normal with
-                                        AzureTable = Some(getAndCreateTable tableName normalAcc)
-                                        TableName = Some tableName } }
-                    | _ -> failwith "please use connect to initialize the Azure backup connection"
+        try
+            let newStorageOption =
+                match props.StorageOption with
+                | Some storageOption ->
+                    match storageOption.Backup with
+                    | Some backup ->
+                        match backup.AzureAccount, storageOption.Normal.AzureAccount with
+                        | Some backUpAcc, Some normalAcc ->
+                            printfn "backupSome"
+
+                            { storageOption with
+                                  Backup =
+                                      Some
+                                          { backup with
+                                                AzureTable = Some(getAndCreateTable tableName backUpAcc)
+                                                TableName = Some tableName }
+                                  Normal =
+                                      { storageOption.Normal with
+                                            AzureTable = Some(getAndCreateTable tableName normalAcc)
+                                            TableName = Some tableName } }
+                        | _ ->
+
+                            printfn "please use connect to initialize the Azure backup connection"
+                            failwith "please use connect to initialize the Azure backup connection"
+                    | None ->
+                        match storageOption.Normal.AzureAccount with
+                        | Some normalAcc ->
+                            { storageOption with
+                                  Normal =
+                                      { storageOption.Normal with
+                                            AzureTable = Some(getAndCreateTable tableName normalAcc)
+                                            TableName = Some tableName } }
+                        | _ ->
+                            printfn "please use connect to initialize the Azure backup connection"
+                            failwith "please use connect to initialize the Azure backup connection"
+
                 | None ->
-                    match storageOption.Normal.AzureAccount with
-                    | Some normalAcc ->
-                        { storageOption with
-                              Normal =
-                                  { storageOption.Normal with
-                                        AzureTable = Some(getAndCreateTable tableName normalAcc)
-                                        TableName = Some tableName } }
-                    | _ -> failwith "please use connect to initialize the Azure backup connection"
+                    printfn "please use connect to initialize the Azure backup connection"
+                    failwith "please use connect to initialize the Azure connection"
 
-            | None -> failwith "please use connect to initialize the Azure connection"
-
-        { props with
-              StorageOption = Some newStorageOption }
+            { props with
+                  StorageOption = Some newStorageOption }
+        with
+        | exn -> failwithf "Could not get a table %s" exn.Message
 
     let filter (filters: AzureFilter list) (props: TableProps) = { props with Filters = filters }
 
@@ -316,7 +335,8 @@ module AzureTable =
                     Ok [| for result in results ->
                               let e = AzureTackleRowEntity(result)
                               read e |]
-            with exn -> return Error exn
+            with
+            | exn -> return Error exn
         }
 
     let executeDirect (read: AzureTackleRowEntity -> 't) (props: TableProps) =
@@ -331,7 +351,8 @@ module AzureTable =
                     [| for result in results ->
                            let e = AzureTackleRowEntity(result)
                            read e |]
-            with exn -> return failwithf "ExecuteDirect failed with exn: %s" exn.Message
+            with
+            | exn -> return failwithf "ExecuteDirect failed with exn: %s" exn.Message
         }
 
 
@@ -401,7 +422,8 @@ module AzureTable =
                 let operation = TableOperation.InsertOrReplace entity
                 do! insertOperation operation props ()
                 return Ok()
-            with exn -> return Error exn
+            with
+            | exn -> return Error exn
         }
 
     let insertCustomRowKey (partKey, rowKey) (set: AzureTackleSetEntity -> DynamicTableEntity) (props: TableProps) =
@@ -414,7 +436,8 @@ module AzureTable =
                 let operation = TableOperation.InsertOrReplace entity
                 do! insertOperation operation props ()
                 return Ok()
-            with exn -> return Error exn
+            with
+            | exn -> return Error exn
         }
 
     let delete (partKey, rowKey) (props: TableProps) =
@@ -422,7 +445,8 @@ module AzureTable =
             try
                 do! deleteOperation (partKey, rowKey) props ()
                 return Ok()
-            with exn -> return Error exn
+            with
+            | exn -> return Error exn
         }
 
     let executeWithReflection<'a> (props: TableProps) =
@@ -432,5 +456,6 @@ module AzureTable =
                 let filter = appendFilters props.Filters
                 let! results = getResultsRecursivly filter azureTable
                 return Ok [| for result in results -> result |> buildRecordFromEntityNoCache<'a> |]
-            with exn -> return Error exn
+            with
+            | exn -> return Error exn
         }
