@@ -84,7 +84,6 @@ module Table =
                 }
 
             do! createTableSafe ()
-            printfn "created table..."
             return table
         }
         |> Async.AwaitTask
@@ -196,7 +195,6 @@ module AzureTable =
                     | Some backup ->
                         match backup.AzureAccount, storageOption.Normal.AzureAccount with
                         | Some backUpAcc, Some normalAcc ->
-                            printfn "backupSome"
 
                             { storageOption with
                                   Backup =
@@ -332,9 +330,11 @@ module AzureTable =
                 let! results = getResultsRecursivly filter azureTable
 
                 return
-                    Ok [| for result in results ->
-                              let e = AzureTackleRowEntity(result)
-                              read e |]
+                    Ok [|
+                        for result in results ->
+                            let e = AzureTackleRowEntity(result)
+                            read e
+                    |]
             with
             | exn -> return Error exn
         }
@@ -455,7 +455,11 @@ module AzureTable =
                 let azureTable = getTable props
                 let filter = appendFilters props.Filters
                 let! results = getResultsRecursivly filter azureTable
-                return Ok [| for result in results -> result |> buildRecordFromEntityNoCache<'a> |]
+
+                return
+                    Ok [|
+                        for result in results -> result |> buildRecordFromEntityNoCache<'a>
+                    |]
             with
             | exn -> return Error exn
         }
