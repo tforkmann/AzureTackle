@@ -58,7 +58,7 @@ let projectUrl = sprintf "%s/%s" gitHome gitName
 // (used as description in AssemblyInfo and as a short summary for NuGet package)
 let summary = "Thin F# API for AzureTackle"
 
-let copyright = "Copyright \169 2020"
+let copyright = "Copyright \169 2021"
 let iconUrl = "https://raw.githubusercontent.com/tforkmann/AzureTackle/master/AzureTackle_logo.png"
 let licenceUrl = "https://github.com/tforkmann/AzureTackle/blob/master/LICENSE.md"
 let configuration = DotNet.BuildConfiguration.Release
