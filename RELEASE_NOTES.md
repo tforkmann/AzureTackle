@@ -1,3 +1,5 @@
+#### 0.5.1 - 2021-10-28
+* Receive timeStamp from entity
 #### 0.5.0 - 2021-09-15
 * Implement Backup operations
 #### 0.4.7 - 2021-09-15

@@ -1,3 +1,16 @@
+source https://api.nuget.org/v3/index.json
+framework: net5.0
+storage: none
+
+nuget Fake.Core.Target
+nuget Fake.DotNet.Cli
+nuget Fake.IO.FileSystem
+nuget Fake.Core.ReleaseNotes
+nuget Fake.Tools.Git
+nuget Fake.Core.UserInput
+nuget Fake.DotNet
+nuget Farmer
+
 group AzureTackle
   storage: none
   source https://api.nuget.org/v3/index.json
@@ -14,6 +27,7 @@ group Test
   nuget Microsoft.Extensions.Configuration
   nuget FSharp.Core
   nuget Microsoft.Extensions.Configuration.Json
+
 group Docs
     source https://api.nuget.org/v3/index.json
     framework: net5.0
