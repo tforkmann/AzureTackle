@@ -185,7 +185,47 @@ let simpleTest =
                         Text = read.string "Text" })
 
               Expect.equal value (Some testData) "Insert test data is the same the readed testdata"
-          }
+          }  
+          testTask "Insert test data as batch to table and read timestamp from the table" {
+
+              let testData =
+                     { PartKey = "PartKey"
+                       RowKey = DateTime.UtcNow |> RowKey.toRowKey
+                       Date = DateTime.UtcNow |> System.DateTimeOffset
+                       Value = 0.2
+                       Exists = true
+                       Text = "isWorking" }
+              do!
+                  azureCon
+                  |> AzureTable.table TestTable
+                  |> AzureTable.insert
+                    (testData.PartKey, testData.RowKey)
+                        (fun set ->
+                            set.dateTimeOffset "Date" testData.Date
+                            set.float "Value" testData.Value
+                            set.bool "Exists"testData.Exists
+                            set.string "Text" testData.Text
+                            set.returnEntity )
+              printfn "RowKey %A" testData.RowKey.GetValue
+              let! timeStamps =
+                  azureCon
+                  |> AzureTable.table TestTable
+                  |> AzureTable.filter [RoKey (Equal,testData.RowKey.GetValue)]
+                  |> AzureTable.execute (fun read ->
+                      read.timeStamp)
+
+              let data =
+                  timeStamps
+                  |> function
+                  | Ok r -> 
+                        printfn "%A" r
+                        (r |> Array.tryHead).IsSome
+                  | Error (exn: Exception) ->
+                      printfn "no data exn :%s" exn.Message
+                      false
+
+              Expect.isTrue data "Timestamp isn't there"
+          }        
           ]
 
 let config =
