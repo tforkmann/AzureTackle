@@ -65,6 +65,8 @@ type AzureTackleRowEntity(entity: DynamicTableEntity) =
 
         member __.partKey: string = entity.PartitionKey
 
+        member __.timeStamp: DateTimeOffset = entity.Timestamp
+
         member __.int(column: string): int =
             try
                 let prop = getProperty column INT32 entity
