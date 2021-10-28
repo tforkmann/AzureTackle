@@ -24,6 +24,7 @@ module Filter =
         | DtmO of string * Operator * DateTimeOffset
         | PaKey of Operator * string
         | RoKey of Operator * string
+        | TStmp of Operator * DateTimeOffset
 
 module Table =
     type AzureAccount = { StorageAccount: CloudStorageAccount }
@@ -268,6 +269,8 @@ module AzureTable =
                         TableQuery.GenerateFilterCondition("PartitionKey", matchOperator operator, value)
                     | RoKey (operator, value) ->
                         TableQuery.GenerateFilterCondition("RowKey", matchOperator operator, value)
+                    | TStmp (operator, value) ->
+                        TableQuery.GenerateFilterConditionForDate("Timestamp", matchOperator operator, value)
 
                 if r = "" then
                     r + filterString

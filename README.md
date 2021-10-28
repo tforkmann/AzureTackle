@@ -199,6 +199,7 @@ type AzureFilter =
     | DtmO of string * Operator *  DateTimeOffset
     | PaKey of Operator * string
     | RoKey of Operator * string
+    | TStmp of Operator * DateTimeOffset
 ```
 
 ## Backup your data
