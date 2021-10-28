@@ -1,3 +1,5 @@
+#### 0.5.2 - 2021-10-28
+* Use new build style
 #### 0.5.1 - 2021-10-28
 * Receive timeStamp from entity
 #### 0.5.0 - 2021-09-15

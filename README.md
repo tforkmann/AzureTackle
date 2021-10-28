@@ -13,7 +13,7 @@ Functional wrapper around WindowsAzure.Storage SDK. `AzureTackle` simplifies the
 ```bash
 # nuget client
 dotnet add package AzureTackle
-  
+
 # or using paket
 paket add AzureTackle --project path/to/project.fsproj
 ```
@@ -47,7 +47,7 @@ let data =
     |> function
     | Ok r -> r |> Array.tryHead
     | Error (exn:Exception) ->
-        failwithf "no data exn :%s" exn.Message        
+        failwithf "no data exn :%s" exn.Message
 ```
 
 ## Query a table inside a task and directly receive the results
@@ -95,7 +95,7 @@ type TestData =
 
 let! value =
     connectionString()
-    |> AzureTable.connect 
+    |> AzureTable.connect
     |> AzureTable.table testTable
     |> AzureTable.filterReceive ("PartKey","RowKey")
     |> AzureTable.receive (fun read ->
@@ -124,7 +124,7 @@ type TestData =
 
 let! values =
     connectionString()
-    |> AzureTable.connect 
+    |> AzureTable.connect
     |> AzureTable.table testTable
     |> AzureTable.filter [DtmO ("Date",GreaterThenOrEqual, timeModel.DateStart);DtmO ("Date",LessThen, timeModel.DateEnd)]
     |> AzureTable.execute (fun read ->
@@ -138,7 +138,7 @@ let data =
     |> function
     | Ok r -> r |> Array.tryHead
     | Error (exn:Exception) ->
-        failwithf "no data exn :%s" exn.Message        
+        failwithf "no data exn :%s" exn.Message
 ```
 
 ## Insert testData into a table
@@ -154,7 +154,7 @@ let data =
 
     do!
     connectionString()
-    |> AzureTable.connect 
+    |> AzureTable.connect
     |> AzureTable.table TestTable
     |> AzureTable.insert
     (testData.PartKey, testData.RowKey)
@@ -172,7 +172,7 @@ let data =
 
     do!
         connectionString()
-        |> AzureTable.connect 
+        |> AzureTable.connect
         |> AzureTable.table TestTable
         |> AzureTable.delete ("partKey", "rowKey")
 ```
@@ -212,4 +212,4 @@ let azureCon =
     |> AzureTable.connectWithBackup
 ```
 
-All your Azure table operations will then be mirrowed to the backup storage account
+All your Azure table operations will then be mirrored to the backup storage account
