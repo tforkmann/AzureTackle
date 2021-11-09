@@ -2,7 +2,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
     <PropertyGroup>
         <OutputType>Exe</OutputType>
-        <TargetFramework>net5.0</TargetFramework>
+        <TargetFramework>net6.0</TargetFramework>
     </PropertyGroup>
     <ItemGroup>
         <Content Include="appsettings.json">
@@ -12,8 +12,7 @@
         <Compile Include="Tests.fs" />
     </ItemGroup>
     <ItemGroup>
-        <ProjectReference Include="../../src/AzureTackle/AzureTackle.fsproj" />   
+        <ProjectReference Include="../../src/AzureTackle/AzureTackle.fsproj" />
     </ItemGroup>
     <Import Project="..\..\.paket\Paket.Restore.targets" />
 </Project>
- 
