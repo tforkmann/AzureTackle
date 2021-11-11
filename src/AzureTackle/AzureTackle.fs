@@ -3,7 +3,6 @@ namespace AzureTackle
 open System
 open Microsoft.WindowsAzure.Storage
 open Microsoft.WindowsAzure.Storage.Table
-open FSharp.Control.Tasks.ContextInsensitive
 open TableReflection
 open System.Threading.Tasks
 

@@ -14,14 +14,13 @@ nuget Farmer
 group AzureTackle
   storage: none
   source https://api.nuget.org/v3/index.json
-  frameworks: net5.0,netcoreapp3.1,net6.0
+  framework: net6.0
   nuget FSharp.Core
-  nuget TaskBuilder.fs
   nuget WindowsAzure.Storage
 group Test
   storage: none
   source https://api.nuget.org/v3/index.json
-  frameworks: net5.0,netcoreapp3.1,net6.0
+  framework: net6.0
   nuget Expecto
   nuget WindowsAzure.Storage
   nuget Microsoft.Extensions.Configuration

@@ -241,11 +241,11 @@ Target.runOrDefault "Build"
 let dependencies = [
 
     "Clean"
-        ==> "UpdateTools"
+        // ==> "UpdateTools"
         ==> "UnitTests"
 
     "Clean"
-        ==> "UpdateTools"
+        // ==> "UpdateTools"
         ==> "Build"
         ==> "UnitTests"
         ==> "PrepareRelease"

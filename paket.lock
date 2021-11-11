@@ -212,7 +212,7 @@ NUGET
 
 GROUP AzureTackle
 STORAGE: NONE
-RESTRICTION: || (== net5.0) (== net6.0) (== netcoreapp3.1)
+RESTRICTION: == net6.0
 NUGET
   remote: https://api.nuget.org/v3/index.json
     FSharp.Core (6.0.1)
@@ -220,11 +220,6 @@ NUGET
     NETStandard.Library (2.0.3)
       Microsoft.NETCore.Platforms (>= 1.1)
     Newtonsoft.Json (13.0.1)
-    System.ValueTuple (4.5)
-    TaskBuilder.fs (2.1)
-      FSharp.Core (>= 4.1.17)
-      NETStandard.Library (>= 1.6.1)
-      System.ValueTuple (>= 4.4)
     WindowsAzure.Storage (9.3.3)
       NETStandard.Library (>= 1.6.1)
       Newtonsoft.Json (>= 10.0.2)
@@ -1290,7 +1285,7 @@ NUGET
 
 GROUP Test
 STORAGE: NONE
-RESTRICTION: || (== net5.0) (== net6.0) (== netcoreapp3.1)
+RESTRICTION: == net6.0
 NUGET
   remote: https://api.nuget.org/v3/index.json
     Expecto (9.0.4)
