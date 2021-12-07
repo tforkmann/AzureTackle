@@ -1,3 +1,5 @@
+![](Logo.png)
+
 # AzureTackle
 
 Functional wrapper around WindowsAzure.Storage SDK. `AzureTackle` simplifies the data access when talking to Azure tables.
