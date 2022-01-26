@@ -18,7 +18,7 @@ type TestData =
       Text: string }
 
 let azureCon =
-    (connectionString,connectionStringBackup)
+    (connectionString,connectionStringBackup,Prod)
     |> AzureTable.connectWithBackup
 
 [<Tests>]
@@ -185,7 +185,7 @@ let simpleTest =
                         Text = read.string "Text" })
 
               Expect.equal value (Some testData) "Insert test data is the same the readed testdata"
-          }  
+          }
           testTask "Insert test data as batch to table and read timestamp from the table" {
 
               let testData =
@@ -217,7 +217,7 @@ let simpleTest =
               let data =
                   timeStamps
                   |> function
-                  | Ok r -> 
+                  | Ok r ->
                         printfn "%A" r
                         (r |> Array.tryHead).IsSome
                   | Error (exn: Exception) ->
@@ -225,7 +225,7 @@ let simpleTest =
                       false
 
               Expect.isTrue data "Timestamp isn't there"
-          }        
+          }
           ]
 
 let config =

@@ -3,9 +3,14 @@ namespace AzureTackle
 [<AutoOpen>]
 module Shared =
     open System
+
     type RowKey =
         | RowKey of string
         member this.GetValue = (fun (RowKey id) -> id) this
+
+    type Stage =
+        | Dev
+        | Prod
 
     module RowKey =
         let toRowKey (dateTime: DateTime) =
