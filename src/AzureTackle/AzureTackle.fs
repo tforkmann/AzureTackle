@@ -130,6 +130,7 @@ module Table =
 [<RequireQualifiedAccess>]
 module AzureTable =
     open Table
+
     type AzureTableConfig =
         { AzureTable: CloudTable option
           TableName: string option
@@ -223,7 +224,7 @@ module AzureTable =
                             failwith "please use connect to initialize the Azure backup connection"
 
                 | None ->
-                    printfn "please use connect to initialize the Azure backup connection"
+                    printfn "please use connect to initialize the Azure connection"
                     failwith "please use connect to initialize the Azure connection"
 
             { props with StorageOption = Some newStorageOption }
@@ -286,12 +287,12 @@ module AzureTable =
         | Some table -> table
         | None -> failwith "please add a table"
 
-    let findBackUpTable props =
+    let findDevTable props =
         match props.StorageOption with
         | Some storageOption ->
             match storageOption.DevStorage with
-            | Some backup ->
-                match backup.AzureTable with
+            | Some devStorage ->
+                match devStorage.AzureTable with
                 | Some table -> Some table
                 | None -> None
             | _ -> None
@@ -359,20 +360,38 @@ module AzureTable =
 
     let insertOperation operation props () =
         task {
-            let azureTable = getTable props
+            match props.StorageOption with
+            | Some sOption ->
+                match sOption.Stage with
+                | Some stage ->
+                    match stage with
+                    | Dev ->
+                        match findDevTable props with
+                        | Some devTable ->
+                            let! _ = devTable.ExecuteAsync operation
+                            ()
 
-            let! _ =
-                match findBackUpTable props with
-                | Some backupTable ->
-                    task {
-                        let! _ = backupTable.ExecuteAsync operation
-                        return ()
-                    }
+                        | _ -> ()
 
-                | _ -> task { () }
+                    | Prod ->
+                        let azureTable = getTable props
 
-            let! _ = azureTable.ExecuteAsync operation
-            ()
+                        match findDevTable props with
+                        | Some devTable ->
+                            let! _ = devTable.ExecuteAsync operation
+                            ()
+                        | None -> ()
+                        let! _ = azureTable.ExecuteAsync operation
+
+                        ()
+                | None ->
+                    let azureTable = getTable props
+                    let! _ = azureTable.ExecuteAsync operation
+                    ()
+            | _ ->
+                printfn "please use connect to initialize the Azure connection"
+                failwith "please use connect to initialize the Azure connection"
+
         }
 
     let deleteTask (azureTable: CloudTable) (partKey, rowKey) () =
@@ -397,10 +416,10 @@ module AzureTable =
             let azureTable = getTable props
 
             let! _ =
-                match findBackUpTable props with
-                | Some backupTable ->
+                match findDevTable props with
+                | Some devTable ->
                     task {
-                        let! _ = deleteTask backupTable (partKey, rowKey) ()
+                        let! _ = deleteTask devTable (partKey, rowKey) ()
                         return ()
                     }
 
