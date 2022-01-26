@@ -9,6 +9,6 @@ let config =
         .AddJsonFile("appsettings.json")
         .Build()
 
-let connectionString = config.["ConnectionString"]
-let connectionStringBackup = config.["ConnectionStringBackup"]
+let connectionStringProd = config.["ConnectionStringProd"]
+let connectionStringDev = config.["ConnectionStringDev"]
 

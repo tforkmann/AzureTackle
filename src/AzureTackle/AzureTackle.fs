@@ -169,9 +169,9 @@ module AzureTable =
 
         { defaultProps () with StorageOption = Some initStorage }
 
-    let connectWithBackup (connectionString: string, connectionStringBackup: string, stage: Stage) =
-        let connection = AzureConnection connectionString
-        let connectionBackUp = AzureConnection connectionStringBackup
+    let connectWithStages (connectionStringProd: string, connectionStringDev: string, stage: Stage) =
+        let connection = AzureConnection connectionStringProd
+        let connectionBackUp = AzureConnection connectionStringDev
 
         let initAzConfig =
             { defaultAzConfig () with AzureAccount = Some(connection.Connect()) }

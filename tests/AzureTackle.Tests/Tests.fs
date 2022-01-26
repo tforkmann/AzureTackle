@@ -19,8 +19,8 @@ type TestData =
       Text: string }
 
 let azureCon =
-    (connectionString, connectionStringBackup, Prod)
-    |> AzureTable.connectWithBackup
+    (connectionStringProd, connectionStringDev, Prod)
+    |> AzureTable.connectWithStages
 
 [<Tests>]
 let simpleTest =
@@ -72,7 +72,7 @@ let simpleTest =
           }
           testTask "Insert test data as batch to table and read data from the table directly" {
 
-              let azureCon = connectionString |> AzureTable.connect
+              let azureCon = connectionStringProd |> AzureTable.connect
 
               let testData =
                   { PartKey = "PartKey"
@@ -93,8 +93,7 @@ let simpleTest =
                       set.returnEntity)
 
               let! values =
-                  connectionString
-                  |> AzureTable.connect
+                  azureCon
                   |> AzureTable.table TestTable
                   |> AzureTable.executeDirect (fun read ->
                       { PartKey = read.partKey
