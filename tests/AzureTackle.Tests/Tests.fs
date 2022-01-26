@@ -46,8 +46,6 @@ let simpleTest =
                     set.string "Text" testData.Text
                     set.returnEntity)
 
-            printfn "RowKey %A" testData.RowKey.GetValue
-
             let! values =
                 azureCon
                 |> AzureTable.table TestTable
@@ -201,8 +199,6 @@ let simpleTest =
                       set.bool "Exists" testData.Exists
                       set.string "Text" testData.Text
                       set.returnEntity)
-
-              printfn "RowKey %A" testData.RowKey.GetValue
 
               let! timeStamps =
                   azureCon

@@ -366,7 +366,7 @@ module AzureTable =
                 | Some backupTable ->
                     task {
                         let! _ = backupTable.ExecuteAsync operation
-                        return printfn "added Values"
+                        return ()
                     }
 
                 | _ -> task { () }
