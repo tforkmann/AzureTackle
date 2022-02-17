@@ -1,6 +1,4 @@
 group Test
 Expecto
 WindowsAzure.Storage
-Microsoft.Extensions.Configuration
-FSharp.Core
 Microsoft.Extensions.Configuration.Json
