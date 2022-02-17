@@ -3,7 +3,6 @@ module Tests
 open Expecto
 open System
 open AzureTackle
-open Config
 
 printfn "Starting Tests"
 
@@ -19,7 +18,7 @@ type TestData =
       Text: string }
 
 let azureCon =
-    (connectionStringProd, connectionStringDev, Prod)
+    ("UseDevelopmentStorage=true", "UseDevelopmentStorage=true", Prod)
     |> AzureTable.connectWithStages
 
 [<Tests>]
@@ -72,12 +71,12 @@ let simpleTest =
           }
           testTask "Insert test data as batch to table and read data from the table directly" {
 
-              let azureCon = connectionStringProd |> AzureTable.connect
+              let azureCon = "UseDevelopmentStorage=true" |> AzureTable.connect
 
               let testData =
                   { PartKey = "PartKey"
                     RowKey = DateTime.UtcNow |> RowKey.toRowKey
-                    Date = DateTime.UtcNow |> System.DateTimeOffset
+                    Date = DateTime.UtcNow |> DateTimeOffset
                     Value = 0.2
                     Exists = true
                     Text = "isWorking" }

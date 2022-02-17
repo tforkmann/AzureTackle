@@ -20,5 +20,9 @@ jobs:
         dotnet-version: ${{ matrix.dotnet }}
     - name: Restore tools
       run: dotnet tool restore
+    - name: Install and Run Azurite
+      run:  npm install -g azurite &&
+            mkdir azurite &&
+            azurite --silent --location azurite --debug azurite\debug.log &
     - name: Run Test
       run: dotnet run -- UnitTests
