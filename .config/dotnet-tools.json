@@ -9,13 +9,13 @@
       ]
     },
     "paket": {
-      "version": "7.0.0-alpha003",
+      "version": "7.0.0-alpha017",
       "commands": [
         "paket"
       ]
     },
     "fantomas-tool": {
-      "version": "4.6.0-alpha-004",
+      "version": "4.6.4",
       "commands": [
         "fantomas"
       ]
