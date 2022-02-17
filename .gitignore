@@ -11,3 +11,4 @@ test/obj/
 reports/*
 node_modules
 tests/AzureTackle.Tests/appsettings.json
+__azurite_db_table__.json
