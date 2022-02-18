@@ -5,10 +5,6 @@
         <TargetFramework>net6.0</TargetFramework>
     </PropertyGroup>
     <ItemGroup>
-        <Content Include="appsettings.json">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </Content>
-        <Compile Include="Config.fs" />
         <Compile Include="Tests.fs" />
     </ItemGroup>
     <ItemGroup>

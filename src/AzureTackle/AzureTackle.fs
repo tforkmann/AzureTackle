@@ -137,8 +137,9 @@ module AzureTable =
           AzureAccount: AzureAccount option }
 
     type StorageOption =
-        { Normal: AzureTableConfig
-          Backup: AzureTableConfig option }
+        { Stage: Stage option
+          DevStorage: AzureTableConfig option
+          ProdStorage: AzureTableConfig }
 
     type TableProps =
         { Filters: AzureFilter list
@@ -160,82 +161,80 @@ module AzureTable =
         let connection = AzureConnection connectionString
 
         let initAzConfig =
-            { defaultAzConfig () with
-                  AzureAccount = Some(connection.Connect()) }
+            { defaultAzConfig () with AzureAccount = Some(connection.Connect()) }
 
-        let initStorage = { Normal = initAzConfig; Backup = None }
+        let initStorage =
+            { Stage = None
+              ProdStorage = initAzConfig
+              DevStorage = None }
 
-        { defaultProps () with
-              StorageOption = Some initStorage }
+        { defaultProps () with StorageOption = Some initStorage }
 
-    let connectWithBackup (connectionString: string, connectionStringBackup: string) =
-        let connection = AzureConnection connectionString
-        let connectionBackUp = AzureConnection connectionStringBackup
+    let connectWithStages (connectionStringProd: string, connectionStringDev: string, stage: Stage) =
+        let connection = AzureConnection connectionStringProd
+        let connectionBackUp = AzureConnection connectionStringDev
 
         let initAzConfig =
-            { defaultAzConfig () with
-                  AzureAccount = Some(connection.Connect()) }
+            { defaultAzConfig () with AzureAccount = Some(connection.Connect()) }
 
         let initAzConfigBackup =
-            { defaultAzConfig () with
-                  AzureAccount = Some(connectionBackUp.Connect()) }
+            { defaultAzConfig () with AzureAccount = Some(connectionBackUp.Connect()) }
 
         { defaultProps () with
-              StorageOption =
-                  Some
-                      { Normal = initAzConfig
-                        Backup = Some initAzConfigBackup } }
+            StorageOption =
+                Some
+                    { Stage = Some stage
+                      ProdStorage = initAzConfig
+                      DevStorage = Some initAzConfigBackup } }
 
     let table tableName (props: TableProps) =
         try
             let newStorageOption =
                 match props.StorageOption with
                 | Some storageOption ->
-                    match storageOption.Backup with
+                    match storageOption.DevStorage with
                     | Some backup ->
-                        match backup.AzureAccount, storageOption.Normal.AzureAccount with
+                        match backup.AzureAccount, storageOption.ProdStorage.AzureAccount with
                         | Some backUpAcc, Some normalAcc ->
 
                             { storageOption with
-                                  Backup =
-                                      Some
-                                          { backup with
-                                                AzureTable = Some(getAndCreateTable tableName backUpAcc)
-                                                TableName = Some tableName }
-                                  Normal =
-                                      { storageOption.Normal with
-                                            AzureTable = Some(getAndCreateTable tableName normalAcc)
-                                            TableName = Some tableName } }
+                                DevStorage =
+                                    Some
+                                        { backup with
+                                            AzureTable = Some(getAndCreateTable tableName backUpAcc)
+                                            TableName = Some tableName }
+                                ProdStorage =
+                                    { storageOption.ProdStorage with
+                                        AzureTable = Some(getAndCreateTable tableName normalAcc)
+                                        TableName = Some tableName } }
                         | _ ->
 
                             printfn "please use connect to initialize the Azure backup connection"
                             failwith "please use connect to initialize the Azure backup connection"
                     | None ->
-                        match storageOption.Normal.AzureAccount with
+                        match storageOption.ProdStorage.AzureAccount with
                         | Some normalAcc ->
                             { storageOption with
-                                  Normal =
-                                      { storageOption.Normal with
-                                            AzureTable = Some(getAndCreateTable tableName normalAcc)
-                                            TableName = Some tableName } }
+                                ProdStorage =
+                                    { storageOption.ProdStorage with
+                                        AzureTable = Some(getAndCreateTable tableName normalAcc)
+                                        TableName = Some tableName } }
                         | _ ->
                             printfn "please use connect to initialize the Azure backup connection"
                             failwith "please use connect to initialize the Azure backup connection"
 
                 | None ->
-                    printfn "please use connect to initialize the Azure backup connection"
+                    printfn "please use connect to initialize the Azure connection"
                     failwith "please use connect to initialize the Azure connection"
 
-            { props with
-                  StorageOption = Some newStorageOption }
+            { props with StorageOption = Some newStorageOption }
         with
         | exn -> failwithf "Could not get a table %s" exn.Message
 
     let filter (filters: AzureFilter list) (props: TableProps) = { props with Filters = filters }
 
     let filterReceive (partKey, rowKey) (props: TableProps) =
-        { props with
-              FilterReceive = Some(partKey, rowKey) }
+        { props with FilterReceive = Some(partKey, rowKey) }
 
     let appendFilters (filters: AzureFilter list) =
         let matchOperator operator =
@@ -284,16 +283,16 @@ module AzureTable =
             | Some x -> x
             | _ -> failwith "please add a storage account"
 
-        match storageOption.Normal.AzureTable with
+        match storageOption.ProdStorage.AzureTable with
         | Some table -> table
         | None -> failwith "please add a table"
 
-    let findBackUpTable props =
+    let findDevTable props =
         match props.StorageOption with
         | Some storageOption ->
-            match storageOption.Backup with
-            | Some backup ->
-                match backup.AzureTable with
+            match storageOption.DevStorage with
+            | Some devStorage ->
+                match devStorage.AzureTable with
                 | Some table -> Some table
                 | None -> None
             | _ -> None
@@ -307,7 +306,7 @@ module AzureTable =
                 | _ -> failwith "please add a storage account"
 
             let azureTable =
-                match storageOption.Normal.AzureTable with
+                match storageOption.ProdStorage.AzureTable with
                 | Some table -> table
                 | None -> failwith "please add a table"
 
@@ -361,20 +360,38 @@ module AzureTable =
 
     let insertOperation operation props () =
         task {
-            let azureTable = getTable props
+            match props.StorageOption with
+            | Some sOption ->
+                match sOption.Stage with
+                | Some stage ->
+                    match stage with
+                    | Dev ->
+                        match findDevTable props with
+                        | Some devTable ->
+                            let! _ = devTable.ExecuteAsync operation
+                            ()
 
-            let! _ =
-                match findBackUpTable props with
-                | Some backupTable ->
-                    task {
-                        let! _ = backupTable.ExecuteAsync operation
-                        return printfn "added Values"
-                    }
+                        | _ -> ()
 
-                | _ -> task { () }
+                    | Prod ->
+                        let azureTable = getTable props
 
-            let! _ = azureTable.ExecuteAsync operation
-            ()
+                        match findDevTable props with
+                        | Some devTable ->
+                            let! _ = devTable.ExecuteAsync operation
+                            ()
+                        | None -> ()
+                        let! _ = azureTable.ExecuteAsync operation
+
+                        ()
+                | None ->
+                    let azureTable = getTable props
+                    let! _ = azureTable.ExecuteAsync operation
+                    ()
+            | _ ->
+                printfn "please use connect to initialize the Azure connection"
+                failwith "please use connect to initialize the Azure connection"
+
         }
 
     let deleteTask (azureTable: CloudTable) (partKey, rowKey) () =
@@ -399,10 +416,10 @@ module AzureTable =
             let azureTable = getTable props
 
             let! _ =
-                match findBackUpTable props with
-                | Some backupTable ->
+                match findDevTable props with
+                | Some devTable ->
                     task {
-                        let! _ = deleteTask backupTable (partKey, rowKey) ()
+                        let! _ = deleteTask devTable (partKey, rowKey) ()
                         return ()
                     }
 

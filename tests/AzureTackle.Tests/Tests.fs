@@ -3,7 +3,7 @@ module Tests
 open Expecto
 open System
 open AzureTackle
-open Config
+
 printfn "Starting Tests"
 
 [<Literal>]
@@ -18,8 +18,8 @@ type TestData =
       Text: string }
 
 let azureCon =
-    (connectionString,connectionStringBackup)
-    |> AzureTable.connectWithBackup
+    ("UseDevelopmentStorage=true", "UseDevelopmentStorage=true", Prod)
+    |> AzureTable.connectWithStages
 
 [<Tests>]
 let simpleTest =
@@ -27,76 +27,72 @@ let simpleTest =
         "AzureTackle"
         [ testTask "Insert test data as batch to table and read data from the table" {
 
-              let testData =
-                     { PartKey = "PartKey"
-                       RowKey = DateTime.UtcNow |> RowKey.toRowKey
-                       Date = DateTime.UtcNow |> System.DateTimeOffset
-                       Value = 0.2
-                       Exists = true
-                       Text = "isWorking" }
-              do!
-                  azureCon
-                  |> AzureTable.table TestTable
-                  |> AzureTable.insert
-                    (testData.PartKey, testData.RowKey)
-                        (fun set ->
-                            set.dateTimeOffset "Date" testData.Date
-                            set.float "Value" testData.Value
-                            set.bool "Exists"testData.Exists
-                            set.string "Text" testData.Text
-                            set.returnEntity )
-              printfn "RowKey %A" testData.RowKey.GetValue
-              let! values =
-                  azureCon
-                  |> AzureTable.table TestTable
-                  |> AzureTable.filter [RoKey (Equal,testData.RowKey.GetValue)]
-                  |> AzureTable.execute (fun read ->
-                      { PartKey = read.partKey
-                        RowKey = read.rowKey
-                        Date = read.dateTimeOffset "Date"
-                        Exists = read.bool "Exists"
-                        Value = read.float "Value"
-                        Text = read.string "Text" })
+            let testData =
+                { PartKey = "PartKey"
+                  RowKey = DateTime.UtcNow |> RowKey.toRowKey
+                  Date = DateTime.UtcNow |> DateTimeOffset
+                  Value = 0.2
+                  Exists = true
+                  Text = "isWorking" }
 
-              let data =
-                  values
-                  |> function
-                  | Ok r -> r |> Array.tryHead
-                  | Error (exn: Exception) ->
-                      printfn "no data exn :%s" exn.Message
-                      failwithf "no data exn :%s" exn.Message
+            do!
+                azureCon
+                |> AzureTable.table TestTable
+                |> AzureTable.insert (testData.PartKey, testData.RowKey) (fun set ->
+                    set.dateTimeOffset "Date" testData.Date
+                    set.float "Value" testData.Value
+                    set.bool "Exists" testData.Exists
+                    set.string "Text" testData.Text
+                    set.returnEntity)
 
-              Expect.equal data (Some testData) "Insert test data is the same the readed testdata"
+            let! values =
+                azureCon
+                |> AzureTable.table TestTable
+                |> AzureTable.filter [
+                    RoKey(Equal, testData.RowKey.GetValue)
+                   ]
+                |> AzureTable.execute (fun read ->
+                    { PartKey = read.partKey
+                      RowKey = read.rowKey
+                      Date = read.dateTimeOffset "Date"
+                      Exists = read.bool "Exists"
+                      Value = read.float "Value"
+                      Text = read.string "Text" })
+
+            let data =
+                values
+                |> function
+                    | Ok r -> r |> Array.tryHead
+                    | Error (exn: Exception) ->
+                        printfn "no data exn :%s" exn.Message
+                        failwithf "no data exn :%s" exn.Message
+
+            Expect.equal data (Some testData) "Insert test data is the same the readed testdata"
           }
           testTask "Insert test data as batch to table and read data from the table directly" {
 
-              let azureCon =
-                    connectionString
-                    |> AzureTable.connect
+              let azureCon = "UseDevelopmentStorage=true" |> AzureTable.connect
+
               let testData =
-                     { PartKey = "PartKey"
-                       RowKey = DateTime.UtcNow |> RowKey.toRowKey
-                       Date = DateTime.UtcNow |> System.DateTimeOffset
-                       Value = 0.2
-                       Exists = true
-                       Text = "isWorking" }
+                  { PartKey = "PartKey"
+                    RowKey = DateTime.UtcNow |> RowKey.toRowKey
+                    Date = DateTime.UtcNow |> DateTimeOffset
+                    Value = 0.2
+                    Exists = true
+                    Text = "isWorking" }
 
               do!
                   azureCon
                   |> AzureTable.table TestTable
-                  |> AzureTable.insert
-                    (testData.PartKey, testData.RowKey)
-                        (fun set ->
-                            set.dateTimeOffset "Date" testData.Date
-                            set.float "Value" testData.Value
-                            set.bool "Exists" testData.Exists
-                            set.string "Text" testData.Text
-                            set.returnEntity
-                            )
+                  |> AzureTable.insert (testData.PartKey, testData.RowKey) (fun set ->
+                      set.dateTimeOffset "Date" testData.Date
+                      set.float "Value" testData.Value
+                      set.bool "Exists" testData.Exists
+                      set.string "Text" testData.Text
+                      set.returnEntity)
 
               let! values =
-                  connectionString
-                  |> AzureTable.connect
+                  azureCon
                   |> AzureTable.table TestTable
                   |> AzureTable.executeDirect (fun read ->
                       { PartKey = read.partKey
@@ -114,24 +110,22 @@ let simpleTest =
               let rowKey = DateTime.UtcNow |> RowKey.toRowKey
 
               let testData =
-                     { PartKey = "PartKey"
-                       RowKey = rowKey
-                       Date = DateTime.UtcNow |> System.DateTimeOffset
-                       Value = 0.2
-                       Exists = true
-                       Text = "isWorking" }
+                  { PartKey = "PartKey"
+                    RowKey = rowKey
+                    Date = DateTime.UtcNow |> System.DateTimeOffset
+                    Value = 0.2
+                    Exists = true
+                    Text = "isWorking" }
 
               do!
                   azureCon
                   |> AzureTable.table TestTable
-                  |> AzureTable.insert
-                    (testData.PartKey, testData.RowKey)
-                        (fun set ->
-                            set.dateTimeOffset "Date" testData.Date
-                            set.float "Value" testData.Value
-                            set.bool "Exists" testData.Exists
-                            set.string "Text" testData.Text
-                            set.returnEntity )
+                  |> AzureTable.insert (testData.PartKey, testData.RowKey) (fun set ->
+                      set.dateTimeOffset "Date" testData.Date
+                      set.float "Value" testData.Value
+                      set.bool "Exists" testData.Exists
+                      set.string "Text" testData.Text
+                      set.returnEntity)
 
 
               let! value =
@@ -152,24 +146,22 @@ let simpleTest =
               let rowKey = DateTime.UtcNow |> RowKey.toRowKey
 
               let testData =
-                     { PartKey = "PartKey"
-                       RowKey = rowKey
-                       Date = DateTime.UtcNow |> System.DateTimeOffset
-                       Value = 0.2
-                       Exists = true
-                       Text = "isWorking" }
+                  { PartKey = "PartKey"
+                    RowKey = rowKey
+                    Date = DateTime.UtcNow |> System.DateTimeOffset
+                    Value = 0.2
+                    Exists = true
+                    Text = "isWorking" }
 
               do!
                   azureCon
                   |> AzureTable.table TestTable
-                  |> AzureTable.insert
-                    (testData.PartKey, testData.RowKey)
-                        (fun set ->
-                            set.dateTimeOffset "Date" testData.Date
-                            set.float "Value" testData.Value
-                            set.bool "Exists" testData.Exists
-                            set.string "Text" testData.Text
-                            set.returnEntity )
+                  |> AzureTable.insert (testData.PartKey, testData.RowKey) (fun set ->
+                      set.dateTimeOffset "Date" testData.Date
+                      set.float "Value" testData.Value
+                      set.bool "Exists" testData.Exists
+                      set.string "Text" testData.Text
+                      set.returnEntity)
 
 
               let! value =
@@ -185,52 +177,50 @@ let simpleTest =
                         Text = read.string "Text" })
 
               Expect.equal value (Some testData) "Insert test data is the same the readed testdata"
-          }  
+          }
           testTask "Insert test data as batch to table and read timestamp from the table" {
 
               let testData =
-                     { PartKey = "PartKey"
-                       RowKey = DateTime.UtcNow |> RowKey.toRowKey
-                       Date = DateTime.UtcNow |> System.DateTimeOffset
-                       Value = 0.2
-                       Exists = true
-                       Text = "isWorking" }
+                  { PartKey = "PartKey"
+                    RowKey = DateTime.UtcNow |> RowKey.toRowKey
+                    Date = DateTime.UtcNow |> System.DateTimeOffset
+                    Value = 0.2
+                    Exists = true
+                    Text = "isWorking" }
+
               do!
                   azureCon
                   |> AzureTable.table TestTable
-                  |> AzureTable.insert
-                    (testData.PartKey, testData.RowKey)
-                        (fun set ->
-                            set.dateTimeOffset "Date" testData.Date
-                            set.float "Value" testData.Value
-                            set.bool "Exists"testData.Exists
-                            set.string "Text" testData.Text
-                            set.returnEntity )
-              printfn "RowKey %A" testData.RowKey.GetValue
+                  |> AzureTable.insert (testData.PartKey, testData.RowKey) (fun set ->
+                      set.dateTimeOffset "Date" testData.Date
+                      set.float "Value" testData.Value
+                      set.bool "Exists" testData.Exists
+                      set.string "Text" testData.Text
+                      set.returnEntity)
+
               let! timeStamps =
                   azureCon
                   |> AzureTable.table TestTable
-                  |> AzureTable.filter [RoKey (Equal,testData.RowKey.GetValue)]
-                  |> AzureTable.execute (fun read ->
-                      read.timeStamp)
+                  |> AzureTable.filter [
+                      RoKey(Equal, testData.RowKey.GetValue)
+                     ]
+                  |> AzureTable.execute (fun read -> read.timeStamp)
 
               let data =
                   timeStamps
                   |> function
-                  | Ok r -> 
-                        printfn "%A" r
-                        (r |> Array.tryHead).IsSome
-                  | Error (exn: Exception) ->
-                      printfn "no data exn :%s" exn.Message
-                      false
+                      | Ok r ->
+                          printfn "%A" r
+                          (r |> Array.tryHead).IsSome
+                      | Error (exn: Exception) ->
+                          printfn "no data exn :%s" exn.Message
+                          false
 
               Expect.isTrue data "Timestamp isn't there"
-          }        
-          ]
+          } ]
 
 let config =
-    { defaultConfig with
-          runInParallel = false }
+    { defaultConfig with runInParallel = false }
 
 [<EntryPoint>]
 let main argv = runTestsInAssembly config argv
