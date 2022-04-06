@@ -1,3 +1,5 @@
+#### 0.7.2 - 2022-04-06
+* Update Packages
 #### 0.7.1 - 2022-02-22
 * Move environment helper out of Shared
 #### 0.7.0 - 2022-02-17

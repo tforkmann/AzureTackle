@@ -264,7 +264,7 @@ let main args =
     try
         match args with
         | [| target |] -> Target.runOrDefault target
-        | _ -> Target.runOrDefault "Run"
+        | _ -> Target.runOrDefault "UnitTests"
         0
     with e ->
         printfn "%A" e
