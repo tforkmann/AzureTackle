@@ -128,7 +128,7 @@ let! values =
     connectionString()
     |> AzureTable.connect
     |> AzureTable.table testTable
-    |> AzureTable.filter [DtmO ("Date",GreaterThenOrEqual, timeModel.DateStart);DtmO ("Date",LessThen, timeModel.DateEnd)]
+    |> AzureTable.filter [DtmO ("Date",GreaterThanOrEqual, timeModel.DateStart);DtmO ("Date",LessThan, timeModel.DateEnd)]
     |> AzureTable.execute (fun read ->
     {   PartKey = read.partKey
         RowKey = read.rowKey
