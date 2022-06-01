@@ -1,3 +1,5 @@
+#### 0.7.3 - 2022-05-31
+* Add Batch Insert Operation
 #### 0.7.2 - 2022-04-06
 * Update Packages
 #### 0.7.1 - 2022-02-22

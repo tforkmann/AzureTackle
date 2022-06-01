@@ -146,7 +146,6 @@ module AzureTable =
           FilterReceive: (string * string) option
           StorageOption: StorageOption option }
 
-
     let private defaultAzConfig () =
         { AzureTable = None
           TableName = None
@@ -393,6 +392,41 @@ module AzureTable =
                 failwith "please use connect to initialize the Azure connection"
 
         }
+    let insertBatchOperation operation props () =
+        task {
+            match props.StorageOption with
+            | Some sOption ->
+                match sOption.Stage with
+                | Some stage ->
+                    match stage with
+                    | Dev ->
+                        match findDevTable props with
+                        | Some devTable ->
+                            let! _ = devTable.ExecuteBatchAsync operation
+                            ()
+
+                        | _ -> ()
+
+                    | Prod ->
+                        let azureTable = getTable props
+
+                        match findDevTable props with
+                        | Some devTable ->
+                            let! _ = devTable.ExecuteBatchAsync operation
+                            ()
+                        | None -> ()
+                        let! _ = azureTable.ExecuteBatchAsync operation
+
+                        ()
+                | None ->
+                    let azureTable = getTable props
+                    let! _ = azureTable.ExecuteBatchAsync operation
+                    ()
+            | _ ->
+                printfn "please use connect to initialize the Azure connection"
+                failwith "please use connect to initialize the Azure connection"
+
+        }
 
     let deleteTask (azureTable: CloudTable) (partKey, rowKey) () =
         task {
@@ -432,14 +466,32 @@ module AzureTable =
     let insert (partKey, rowKey: RowKey) (set: AzureTackleSetEntity -> DynamicTableEntity) (props: TableProps) =
         task {
             try
-                let entity =
-                    let e =
-                        AzureTackleSetEntity(partKey, rowKey.GetValue)
-
-                    set e
-
+                let entity = AzureTackleSetEntity(partKey, rowKey.GetValue) |> set
                 let operation = TableOperation.InsertOrReplace entity
                 do! insertOperation operation props ()
+                return Ok()
+            with
+            | exn -> return Error exn
+        }
+
+    let insertBatch  (messages: 'a array)  (mapper: 'a -> DynamicTableEntity) (props: TableProps) =
+        task {
+            try
+                let chunks = messages |> Array.chunkBySize 100
+                for chunk in chunks do
+                    let entities =  chunk |> Seq.map mapper
+                    let batchOperation =
+                        try
+                            TableBatchOperation ()
+                        with
+                        | exn -> failwithf "Couldn't open new Table operation. Message: %s" exn.Message
+                    try
+                        entities
+                        |> Seq.iter batchOperation.InsertOrReplace
+                    with
+                        | exn ->    printfn  "Couldn't Add Entity Message: %s" exn.Message
+                                    failwithf  "Couldn't Add Entity Message: %s" exn.Message
+                    do! insertBatchOperation batchOperation props ()
                 return Ok()
             with
             | exn -> return Error exn

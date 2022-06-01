@@ -3,6 +3,7 @@ module Tests
 open Expecto
 open System
 open AzureTackle
+open Microsoft.WindowsAzure.Storage.Table
 
 printfn "Starting Tests"
 
@@ -25,7 +26,7 @@ let azureCon =
 let simpleTest =
     testList
         "AzureTackle"
-        [ testTask "Insert test data as batch to table and read data from the table" {
+        [ testTask "Insert test data to table and read data from the table" {
 
             let testData =
                 { PartKey = "PartKey"
@@ -69,7 +70,7 @@ let simpleTest =
 
             Expect.equal data (Some testData) "Insert test data is the same the readed testdata"
           }
-          testTask "Insert test data as batch to table and read data from the table directly" {
+          testTask "Insert test data to table and read data from the table directly" {
 
               let azureCon = "UseDevelopmentStorage=true" |> AzureTable.connect
 
@@ -142,7 +143,7 @@ let simpleTest =
 
               Expect.equal value (Some testData) "Insert test data is the same the readed testdata"
           }
-          testTask "Insert test data as batch to table and backup and receive exactly one value from the backup table" {
+          testTask "Insert test data to table and backup and receive exactly one value from the backup table" {
               let rowKey = DateTime.UtcNow |> RowKey.toRowKey
 
               let testData =
@@ -178,7 +179,7 @@ let simpleTest =
 
               Expect.equal value (Some testData) "Insert test data is the same the readed testdata"
           }
-          testTask "Insert test data as batch to table and read timestamp from the table" {
+          testTask "Insert test data to table and read timestamp from the table" {
 
               let testData =
                   { PartKey = "PartKey"
@@ -217,7 +218,46 @@ let simpleTest =
                           false
 
               Expect.isTrue data "Timestamp isn't there"
-          } ]
+          }
+          testTask "Insert test data as batch to table and read timestamp from the table" {
+
+                let testData =
+                  [| {  PartKey = "PartKey"
+                        RowKey = DateTime.UtcNow |> RowKey.toRowKey
+                        Date = DateTime.UtcNow |> System.DateTimeOffset
+                        Value = 0.2
+                        Exists = true
+                        Text = "isWorking" }|]
+                do!
+                    azureCon
+                    |> AzureTable.table TestTable
+                    |> AzureTable.insertBatch testData (fun d ->
+                        let set = AzureTackleSetEntity(d.PartKey, d.RowKey.GetValue)
+                        set.dateTimeOffset "Date" d.Date
+                        set.bool "Exists" d.Exists
+                        set.string "Text" d.Text
+                        set.float "Value" d.Value
+                        set.returnEntity)
+                let! timeStamps =
+                    azureCon
+                    |> AzureTable.table TestTable
+                    |> AzureTable.filter [
+                        RoKey(Equal, testData.[0].RowKey.GetValue)
+                        ]
+                    |> AzureTable.execute (fun read -> read.timeStamp)
+
+                let data =
+                    timeStamps
+                    |> function
+                        | Ok r ->
+                            printfn "%A" r
+                            (r |> Array.tryHead).IsSome
+                        | Error (exn: Exception) ->
+                            printfn "no data exn :%s" exn.Message
+                            false
+
+                Expect.isTrue data "Timestamp isn't there"
+          }   ]
 
 let config =
     { defaultConfig with runInParallel = false }
