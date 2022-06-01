@@ -257,6 +257,41 @@ let simpleTest =
                             false
 
                 Expect.isTrue data "Timestamp isn't there"
+          }
+          testTask "Delete test data as batch" {
+
+                let! values =
+                  azureCon
+                  |> AzureTable.table TestTable
+                  |> AzureTable.executeDirect (fun read ->
+                      { PartKey = read.partKey
+                        RowKey = read.rowKey
+                        Date = read.dateTimeOffset "Date"
+                        Exists = read.bool "Exists"
+                        Value = read.float "Value"
+                        Text = read.string "Text" })
+
+                do!
+                    azureCon
+                    |> AzureTable.table TestTable
+                    |> AzureTable.deleteBatch values (fun d ->
+                        let set = AzureTackleSetEntity(d.PartKey, d.RowKey.GetValue)
+                        set.dateTimeOffset "Date" d.Date
+                        set.bool "Exists" d.Exists
+                        set.string "Text" d.Text
+                        set.float "Value" d.Value
+                        set.returnEntity)
+                let! values =
+                    azureCon
+                    |> AzureTable.table TestTable
+                    |> AzureTable.executeDirect (fun read ->
+                        {   PartKey = read.partKey
+                            RowKey = read.rowKey
+                            Date = read.dateTimeOffset "Date"
+                            Exists = read.bool "Exists"
+                            Value = read.float "Value"
+                            Text = read.string "Text" })
+                Expect.isEmpty values "Values should be empty"
           }   ]
 
 let config =

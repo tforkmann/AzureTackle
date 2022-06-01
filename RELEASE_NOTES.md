@@ -1,3 +1,5 @@
+#### 0.7.4 - 2022-06-01
+* Add Batch Delete Operation
 #### 0.7.3 - 2022-05-31
 * Add Batch Insert Operation
 #### 0.7.2 - 2022-04-06

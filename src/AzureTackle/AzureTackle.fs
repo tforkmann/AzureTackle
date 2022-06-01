@@ -392,7 +392,7 @@ module AzureTable =
                 failwith "please use connect to initialize the Azure connection"
 
         }
-    let insertBatchOperation operation props () =
+    let insertOrDeleteBatchOperation operation props () =
         task {
             match props.StorageOption with
             | Some sOption ->
@@ -474,7 +474,7 @@ module AzureTable =
             | exn -> return Error exn
         }
 
-    let insertBatch  (messages: 'a array)  (mapper: 'a -> DynamicTableEntity) (props: TableProps) =
+    let insertBatch (messages: 'a array)  (mapper: 'a -> DynamicTableEntity) (props: TableProps) =
         task {
             try
                 let chunks = messages |> Array.chunkBySize 100
@@ -487,11 +487,11 @@ module AzureTable =
                         | exn -> failwithf "Couldn't open new Table operation. Message: %s" exn.Message
                     try
                         entities
-                        |> Seq.iter batchOperation.InsertOrReplace
+                        |> Seq.iter (fun e ->  batchOperation.Add (TableOperation.InsertOrReplace e))
                     with
                         | exn ->    printfn  "Couldn't Add Entity Message: %s" exn.Message
                                     failwithf  "Couldn't Add Entity Message: %s" exn.Message
-                    do! insertBatchOperation batchOperation props ()
+                    do! insertOrDeleteBatchOperation batchOperation props ()
                 return Ok()
             with
             | exn -> return Error exn
@@ -515,6 +515,30 @@ module AzureTable =
         task {
             try
                 do! deleteOperation (partKey, rowKey) props ()
+                return Ok()
+            with
+            | exn -> return Error exn
+        }
+    let deleteBatch (messages: 'a array)  (mapper: 'a -> DynamicTableEntity) (props: TableProps) =
+        task {
+            try
+                let chunks = messages |> Array.chunkBySize 100
+                for chunk in chunks do
+                    let entities =  chunk |> Seq.map mapper
+                    let batchOperation =
+                        try
+                            TableBatchOperation ()
+                        with
+                        | exn -> failwithf "Couldn't open new Table operation. Message: %s" exn.Message
+                    try
+                        entities
+                        |> Seq.iter (fun e ->
+                            e.ETag <- "*"
+                            batchOperation.Add (TableOperation.Delete e))
+                    with
+                        | exn ->    printfn  "Couldn't Delete Entity Message: %s" exn.Message
+                                    failwithf  "Couldn't Delete Entity Message: %s" exn.Message
+                    do! insertOrDeleteBatchOperation batchOperation props ()
                 return Ok()
             with
             | exn -> return Error exn
