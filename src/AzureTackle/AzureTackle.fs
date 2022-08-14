@@ -1,8 +1,7 @@
 namespace AzureTackle
 
 open System
-open Microsoft.WindowsAzure.Storage
-open Microsoft.WindowsAzure.Storage.Table
+open Microsoft.Azure.Cosmos.Table
 open TableReflection
 open System.Threading.Tasks
 

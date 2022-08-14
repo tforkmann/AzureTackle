@@ -3,7 +3,7 @@ module Tests
 open Expecto
 open System
 open AzureTackle
-open Microsoft.WindowsAzure.Storage.Table
+open Microsoft.Azure.Cosmos.Table
 
 printfn "Starting Tests"
 

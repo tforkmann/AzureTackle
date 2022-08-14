@@ -1,4 +1,4 @@
 group Test
 Expecto
-WindowsAzure.Storage
+Microsoft.Azure.Cosmos.Table
 Microsoft.Extensions.Configuration.Json
