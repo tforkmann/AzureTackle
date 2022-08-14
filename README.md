@@ -2,7 +2,7 @@
 
 # AzureTackle
 
-Functional wrapper around WindowsAzure.Storage SDK. `AzureTackle` simplifies the data access when talking to Azure tables.
+Functional wrapper around Microsoft.Azure.Cosmos.Table SDK. `AzureTackle` simplifies the data access when talking to Azure tables.
 
 ## Available Packages
 
