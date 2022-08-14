@@ -1,3 +1,5 @@
+#### 0.8.0 - 2022-08-15
+* Use Microsoft.Azure.Cosmos.Table SDK
 #### 0.7.4 - 2022-06-01
 * Add Batch Delete Operation
 #### 0.7.3 - 2022-05-31

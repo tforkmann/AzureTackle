@@ -2,7 +2,7 @@ namespace AzureTackle
 
 open System
 open System.Collections.Generic
-open Microsoft.WindowsAzure.Storage.Table
+open Microsoft.Azure.Cosmos.Table
 
 type Props =
     | FLT

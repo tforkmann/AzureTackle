@@ -2,7 +2,7 @@ namespace AzureTackle
 
 module TableReflection =
 
-    open Microsoft.WindowsAzure.Storage.Table
+    open Microsoft.Azure.Cosmos.Table
 
     let typeCache = System.Collections.Generic.Dictionary()
 
