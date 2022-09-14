@@ -63,6 +63,8 @@ type AzureTackleRowEntity(entity: DynamicTableEntity) =
     with
         member __.rowKey: RowKey = RowKey entity.RowKey
 
+        member __.eTag: string = entity.ETag
+
         member __.partKey: string = entity.PartitionKey
 
         member __.timeStamp: DateTimeOffset = entity.Timestamp
