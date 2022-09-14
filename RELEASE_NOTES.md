@@ -1,3 +1,5 @@
+#### 0.8.1 - 2022-09-14
+* Add ETag
 #### 0.8.0 - 2022-08-15
 * Use Microsoft.Azure.Cosmos.Table SDK
 #### 0.7.4 - 2022-06-01
