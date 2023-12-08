@@ -69,20 +69,18 @@ module Table =
 
                     printfn "Could not get TableReference %s" exn.Message
                     failwith msg
-            /// Azure will temporarily lock table names after deleting and can take some time before the table name is made available again.
-            let rec createTableSafe () =
-                task {
-                    try
-                        let! _ = table.CreateIfNotExistsAsync()
-                        ()
-                    with
-                    | exn ->
-                        printfn "Error in creating %s" exn.Message
-                        do! Task.Delay 5000
-                        return! createTableSafe ()
-                }
-
-            do! createTableSafe ()
+            // Azure will temporarily lock table names after deleting and can take some time before the table name is made available again.
+            let mutable finished = false
+            while not finished do
+                try
+                    table.CreateIfNotExistsAsync()
+                    |> Async.AwaitTask
+                    |> Async.RunSynchronously
+                    |> ignore
+                    finished <- true
+                with
+                | _ ->
+                    Threading.Thread.Sleep 5000
             return table
         }
         |> Async.AwaitTask
@@ -100,7 +98,7 @@ module Table =
                 return Some result
         }
 
-    let getResultsRecursivly (filter: string option) (table: CloudTable) =
+    let getResultsRecursively (filter: string option) (table: CloudTable) =
         task {
             let rec getResults token =
                 task {
@@ -326,7 +324,7 @@ module AzureTable =
             try
                 let azureTable = getTable props
                 let filter = appendFilters props.Filters
-                let! results = getResultsRecursivly filter azureTable
+                let! results = getResultsRecursively filter azureTable
 
                 return
                     Ok [|
@@ -344,7 +342,7 @@ module AzureTable =
                 let azureTable = getTable props
 
                 let filter = appendFilters props.Filters
-                let! results = getResultsRecursivly filter azureTable
+                let! results = getResultsRecursively filter azureTable
 
                 return
                     [| for result in results ->
@@ -548,7 +546,7 @@ module AzureTable =
             try
                 let azureTable = getTable props
                 let filter = appendFilters props.Filters
-                let! results = getResultsRecursivly filter azureTable
+                let! results = getResultsRecursively filter azureTable
 
                 return
                     Ok [|
