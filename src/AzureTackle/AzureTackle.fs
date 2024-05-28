@@ -154,10 +154,14 @@ module AzureTable =
           StorageOption = None }
 
     let connect (connectionString: string) =
+
         let connection = AzureConnection connectionString
 
         let initAzConfig =
-            { defaultAzConfig () with AzureAccount = Some(connection.Connect()) }
+            try
+                { defaultAzConfig () with AzureAccount = Some(connection.Connect()) }
+            with
+            | exn -> failwithf "Could not connect to Azure %s" exn.Message
 
         let initStorage =
             { Stage = None
@@ -168,20 +172,25 @@ module AzureTable =
 
     let connectWithStages (connectionStringProd: string, connectionStringDev: string, stage: Stage) =
         let connection = AzureConnection connectionStringProd
-        let connectionBackUp = AzureConnection connectionStringDev
+        let connectionDev = AzureConnection connectionStringDev
 
         let initAzConfig =
-            { defaultAzConfig () with AzureAccount = Some(connection.Connect()) }
+            try
+                { defaultAzConfig () with AzureAccount = Some(connection.Connect()) }
+            with
+            | exn -> failwithf "Could not connect to Azure %s stage %s" exn.Message stage.Value
 
-        let initAzConfigBackup =
-            { defaultAzConfig () with AzureAccount = Some(connectionBackUp.Connect()) }
-
+        let initAzConfigDev =
+            try
+                { defaultAzConfig () with AzureAccount = Some(connectionDev.Connect()) }
+            with
+            | exn -> failwithf "Could not connect to Azure %s stage %s" exn.Message stage.Value
         { defaultProps () with
             StorageOption =
                 Some
                     { Stage = Some stage
                       ProdStorage = initAzConfig
-                      DevStorage = Some initAzConfigBackup } }
+                      DevStorage = Some initAzConfigDev } }
 
     let table tableName (props: TableProps) =
         try

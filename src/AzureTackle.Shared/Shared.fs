@@ -11,6 +11,10 @@ module Shared =
     type Stage =
         | Dev
         | Prod
+        member this.Value =
+            match this with
+            | Dev -> "dev"
+            | Prod -> "prod"
 
     module RowKey =
         let toRowKey (dateTime: DateTime) =
