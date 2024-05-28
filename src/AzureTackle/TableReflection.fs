@@ -2,7 +2,7 @@ namespace AzureTackle
 
 module TableReflection =
 
-    open Microsoft.Azure.Cosmos.Table
+    open Azure.Data.Tables
 
     let typeCache = System.Collections.Generic.Dictionary()
 
@@ -22,22 +22,22 @@ module TableReflection =
             addToCache<'T> ()
             typeCache.[typeof<'T>]
 
-    let buildRecordFromEntity<'T> (entity: DynamicTableEntity) =
-        let cache = getOrAddFromCache<'T> ()
+    // let buildRecordFromEntity<'T> (entity: TableEntity) =
+    //     let cache = getOrAddFromCache<'T> ()
 
-        let args =
-            [| for p in cache.Parameters do
-                entity.Properties.[p.Name].PropertyAsObject |]
+    //     let args =
+    //         [| for p in cache.Parameters do
+    //             entity.Properties.[p.Name].PropertyAsObject |]
 
-        cache.Ctor.Invoke(args) :?> 'T
+    //     cache.Ctor.Invoke(args) :?> 'T
 
-    let buildRecordFromEntityNoCache<'T> (entity: DynamicTableEntity) =
+    let buildRecordFromEntityNoCache<'T> (entity: TableEntity) =
         let theType = typeof<'T>
         let ctor = theType.GetConstructors().[0]
         let parameters = ctor.GetParameters()
 
         let args =
             [| for p in parameters do
-                entity.Properties.[p.Name].PropertyAsObject |]
+                entity.Item(p.Name) |]
 
         ctor.Invoke(args) :?> 'T

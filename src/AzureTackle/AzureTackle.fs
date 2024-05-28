@@ -1,7 +1,7 @@
 namespace AzureTackle
 
 open System
-open Microsoft.Azure.Cosmos.Table
+open Azure.Data.Tables
 open TableReflection
 open System.Threading.Tasks
 
@@ -25,42 +25,41 @@ module Filter =
         | TStmp of Operator * DateTimeOffset
 
 module Table =
-    type AzureAccount = { StorageAccount: CloudStorageAccount }
+    type AzureAccount = { TableServiceClient: TableServiceClient }
 
     type AzureConnection =
         | AzureConnection of string
         member this.Connect() =
             match this with
-            | AzureConnection connectionString -> { StorageAccount = CloudStorageAccount.Parse connectionString }
+            | AzureConnection connectionString -> { TableServiceClient = TableServiceClient(connectionString) }
 
-    let getTable tableName (azConnection: AzureAccount) =
-        task {
-            let client =
-                azConnection.StorageAccount.CreateCloudTableClient()
+    // let getTable tableName (azConnection: AzureAccount) =
+    //     task {
+    //         let client = azConnection.TableServiceClient
 
-            let table =
-                try
-                    client.GetTableReference tableName
-                with
-                | exn ->
-                    let msg =
-                        sprintf "Could not get TableReference %s" exn.Message
+    //         let table =
+    //             try
+    //                 client.GetTableReference tableName
+    //             with
+    //             | exn ->
+    //                 let msg =
+    //                     sprintf "Could not get TableReference %s" exn.Message
 
-                    failwith msg
+    //                 failwith msg
 
-            return table
-        }
-        |> Async.AwaitTask
-        |> Async.RunSynchronously
+    //         return table
+    //     }
+    //     |> Async.AwaitTask
+    //     |> Async.RunSynchronously
 
     let getAndCreateTable tableName (azConnection: AzureAccount) =
         task {
             let client =
-                azConnection.StorageAccount.CreateCloudTableClient()
+                azConnection.TableServiceClient
 
             let table =
                 try
-                    client.GetTableReference tableName
+                    client.GetTableClient(tableName)
                 with
                 | exn ->
 
@@ -73,7 +72,7 @@ module Table =
             let mutable finished = false
             while not finished do
                 try
-                    table.CreateIfNotExistsAsync()
+                    client.CreateTableIfNotExistsAsync(tableName)
                     |> Async.AwaitTask
                     |> Async.RunSynchronously
                     |> ignore
@@ -86,11 +85,10 @@ module Table =
         |> Async.AwaitTask
         |> Async.RunSynchronously
 
-    let receiveValue (partKey, rowKey) (table: CloudTable) =
+    let receiveValue (partKey, rowKey) (table: TableClient) =
         task {
-            let query = TableOperation.Retrieve(partKey, rowKey)
-            let! r = table.ExecuteAsync(query)
-            let result = r.Result :?> DynamicTableEntity
+            let! response = table.GetEntityAsync(partKey, rowKey)
+            let result = response.Value
 
             if isNull result then
                 return None
@@ -98,19 +96,24 @@ module Table =
                 return Some result
         }
 
-    let getResultsRecursively (filter: string option) (table: CloudTable) =
+    let query (filter: string option) (table: TableClient) token : Task<Azure.AsyncPageable<'a>>=
+        task {
+
+        match filter with
+        | Some f ->
+            return table.QueryAsync<'a>(f,Nullable(1500),[||],token)
+        | None -> return table.QueryAsync<'a>("",Nullable(1500),[||],token)
+        }
+
+    let getResultsRecursively (filter: string option) (table: TableClient) =
         task {
             let rec getResults token =
                 task {
-                    let query =
-                        match filter with
-                        | Some f -> TableQuery().Where(f)
-                        | None -> TableQuery()
 
-                    let! result = table.ExecuteQuerySegmentedAsync(query, token)
-
-                    let token = result.ContinuationToken
-                    let result = result |> Seq.toList
+                    let! result  = query filter table token
+                    // let token = result.ContinuationToken
+                    let pages = result.AsPages().GetAsyncEnumerator()
+                    let result = pages.Current.Values |> Seq.toList
 
                     if isNull token then
                         return result
@@ -129,7 +132,7 @@ module AzureTable =
     open Table
 
     type AzureTableConfig =
-        { AzureTable: CloudTable option
+        { AzureTable: TableClient option
           TableName: string option
           AzureAccount: AzureAccount option }
 
@@ -235,12 +238,12 @@ module AzureTable =
     let appendFilters (filters: AzureFilter list) =
         let matchOperator operator =
             match operator with
-            | LessThan -> QueryComparisons.LessThan
-            | LessThanOrEqual -> QueryComparisons.LessThanOrEqual
-            | GreaterThan -> QueryComparisons.GreaterThan
-            | GreaterThanOrEqual -> QueryComparisons.GreaterThanOrEqual
-            | Equal -> QueryComparisons.Equal
-            | NotEqual -> QueryComparisons.NotEqual
+            | LessThan -> "lt"
+            | LessThanOrEqual -> "le"
+            | GreaterThan -> "gt"
+            | GreaterThanOrEqual -> "ge"
+            | Equal -> "eq"
+            | NotEqual -> "ne"
 
         filters
         |> List.fold
@@ -425,7 +428,7 @@ module AzureTable =
 
         }
 
-    let deleteTask (azureTable: CloudTable) (partKey, rowKey) () =
+    let deleteTask (azureTable: TableClient) (partKey, rowKey) () =
         task {
             let! retrieveOp =
                 TableOperation.Retrieve(partKey, rowKey)

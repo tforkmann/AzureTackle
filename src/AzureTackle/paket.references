@@ -1,3 +1,3 @@
 group AzureTackle
   FSharp.Core
-  Microsoft.Azure.Cosmos.Table
+  Azure.Data.Tables
