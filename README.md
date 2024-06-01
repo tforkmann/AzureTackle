@@ -33,6 +33,7 @@ type TestData =
       Date: DateTimeOffset
       Exists: bool
       Value: float
+      DoubleValue: double
       Text: string }
 
 let! values =
@@ -43,6 +44,7 @@ let! values =
         RowKey = read.rowKey
         Date = read.dateTimeOffset "Date"
         Value = read.float "Value"
+        DoubleValue = read.double "DoubleValue"
         Text = read.string "Text" })
 let data =
     values
