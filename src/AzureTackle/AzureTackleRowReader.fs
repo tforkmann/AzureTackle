@@ -14,7 +14,7 @@ type Props =
     | BOOL
     | BINARY
 
-type AzureTackleRowEntity(entity: DynamicTableEntity) =
+type AzureTackleRowEntity(entity: TableEntity) =
     let columnDict = Dictionary<string, EntityProperty>()
 
     do
@@ -46,7 +46,7 @@ type AzureTackleRowEntity(entity: DynamicTableEntity) =
             availableColumns
             exn.Message
 
-    let getProperty (propName: string) (columnType: Props) (entity: DynamicTableEntity) =
+    let getProperty (propName: string) (columnType: Props) (entity: TableEntity) =
         let availableColumns =
             columnDict.Keys
             |> Seq.map (fun key -> sprintf "[%s]" key)
@@ -56,14 +56,14 @@ type AzureTackleRowEntity(entity: DynamicTableEntity) =
             entity.Properties.[propName]
         with exn -> failToRead availableColumns columnType exn
 
-    let getOptionalProperty (propName: string) (entity: DynamicTableEntity) =
+    let getOptionalProperty (propName: string) (entity: TableEntity) =
         match entity.Properties.TryGetValue propName with
         | true, v -> Some v
         | _ -> None
     with
         member __.rowKey: RowKey = RowKey entity.RowKey
 
-        member __.eTag: string = entity.ETag
+        member __.eTag: Azure.ETag = entity.ETag
 
         member __.partKey: string = entity.PartitionKey
 
@@ -262,7 +262,7 @@ type AzureTackleRowEntity(entity: DynamicTableEntity) =
                     exn.Message
 
 type AzureTackleSetEntity(partKey, rowKey: string) =
-    let entity = DynamicTableEntity(partKey, rowKey)
+    let entity = TableEntity(partKey, rowKey)
 
     member __.returnEntity = entity
 
