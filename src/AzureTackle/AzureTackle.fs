@@ -3,6 +3,7 @@ namespace AzureTackle
 open System
 open Azure.Data.Tables
 open TableReflection
+open System.Threading
 open System.Threading.Tasks
 
 [<AutoOpen>]
@@ -120,25 +121,49 @@ module Table =
         | None -> return table.QueryAsync<'a>("",Nullable(1500),[||],token)
         }
 
-    let getResultsRecursively (filter: string option) (table: TableClient) =
-        task {
-            let rec getResults token =
-                task {
+    // let getResultsRecursively (filter: string option) (table: CloudTable) =
+    //     task {
+    //         let rec getResults token =
+    //             task {
+    //                 let query =
+    //                     match filter with
+    //                     | Some f -> TableQuery().Where(f)
+    //                     | None -> TableQuery()
 
-                    let! result  = query filter table token
-                    // let token = result.ContinuationToken
-                    let pages = result.AsPages().GetAsyncEnumerator()
-                    let result = pages.Current.Values |> Seq.toList
+    //                 let! result = table.ExecuteQuerySegmentedAsync(query, token)
 
-                    if isNull token then
-                        return result
-                    else
-                        let! others = getResults token
-                        return result @ others
-                }
+    //                 let token = result.ContinuationToken
+    //                 let result = result |> Seq.toList
 
-            return! getResults null
-        }
+    //                 if isNull token then
+    //                     return result
+    //                 else
+    //                     let! others = getResults token
+    //                     return result @ others
+    //             }
+
+    //         return! getResults null
+    //     }
+
+    // let getResultsRecursively (filter: string option) (table: TableClient) =
+    //     task {
+    //         let rec getResults token =
+    //             task {
+
+    //                 let! result  = query filter table token
+    //                 let pages = result.AsPages().GetAsyncEnumerator()
+    //                 let result = pages.Current.Values |> Seq.toList
+    //                 let token = result.ContinuationToken
+
+    //                 if isNull token then
+    //                     return result
+    //                 else
+    //                     let! others = getResults token
+    //                     return result @ others
+    //             }
+
+    //         return! getResults null
+    //     }
 
 
 
@@ -159,7 +184,8 @@ module AzureTable =
     type TableProps =
         { Filters: AzureFilter list
           FilterReceive: (string * string) option
-          StorageOption: StorageOption option }
+          StorageOption: StorageOption option
+          Token : CancellationToken }
 
     let private defaultAzConfig () =
         { AzureTable = None
@@ -169,7 +195,8 @@ module AzureTable =
     let private defaultProps () =
         { Filters = []
           FilterReceive = None
-          StorageOption = None }
+          StorageOption = None
+          Token = CancellationToken.None}
 
     let connect (connectionString: string) =
         let connection = AzureConnection connectionString
@@ -342,7 +369,7 @@ module AzureTable =
             try
                 let azureTable = getTable props
                 let filter = appendFilters props.Filters
-                let! results = getResultsRecursively filter azureTable
+                let! results = query filter azureTable token
 
                 return
                     Ok [|
