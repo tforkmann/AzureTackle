@@ -293,6 +293,7 @@ let simpleTest =
                         set.bool "Exists" d.Exists
                         set.string "Text" d.Text
                         set.float "Value" d.Value
+                        set.decimal "ValueDecimal" d.ValueDecimal
                         set.returnEntity)
                 let! values =
                     azureCon
