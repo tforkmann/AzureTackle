@@ -21,8 +21,8 @@ type TestData =
       Text: string }
 
 let azureCon =
-    ("UseDevelopmentStorage=true", "UseDevelopmentStorage=true", Prod,CancellationToken.None)
-    |> AzureTable.connectWithStages
+    ("UseDevelopmentStorage=true")
+    |> AzureTable.connect
 
 [<Tests>]
 let simpleTest =
@@ -42,7 +42,7 @@ let simpleTest =
             do!
                 azureCon
                 |> AzureTable.table TestTable
-                |> AzureTable.insert (testData.PartKey, testData.RowKey) (fun set ->
+                |> AzureTable.upsert (testData.PartKey, testData.RowKey) (fun set ->
                     set.add "Date" testData.Date
                     set.add "Value" testData.Value
                     set.add "ValueDecimal" testData.ValueDecimal
@@ -63,19 +63,12 @@ let simpleTest =
                       ValueDecimal = read.decimal "ValueDecimal"
                       Text = read.string "Text" })
 
-            let data =
-                values
-                |> function
-                    | Ok r -> r |> Array.tryHead
-                    | Error (exn: Exception) ->
-                        printfn "no data exn :%s" exn.Message
-                        failwithf "no data exn :%s" exn.Message
-
+            let data =  values |> Array.tryHead
             Expect.equal data (Some testData) "Insert test data is the same the readed testdata"
           }
           testTask "Insert test data to table and read data from the table directly" {
 
-              let azureCon = ("UseDevelopmentStorage=true",CancellationToken.None) |> AzureTable.connect
+              let azureCon = ("UseDevelopmentStorage=true") |> AzureTable.connect
 
               let testData =
                   { PartKey = "PartKey"
@@ -89,7 +82,7 @@ let simpleTest =
               do!
                   azureCon
                   |> AzureTable.table TestTable
-                  |> AzureTable.insert (testData.PartKey, testData.RowKey) (fun set ->
+                  |> AzureTable.upsert (testData.PartKey, testData.RowKey) (fun set ->
                       set.add "Date" testData.Date
                       set.add "Value" testData.Value
                       set.add "ValueDecimal" testData.ValueDecimal
@@ -109,13 +102,7 @@ let simpleTest =
                         ValueDecimal = read.decimal "ValueDecimal"
                         Text = read.string "Text" })
 
-              let results =
-                values
-                |> function
-                    | Ok r -> r |> Array.tryHead
-                    | Error (exn: Exception) ->
-                        printfn "no data exn :%s" exn.Message
-                        failwithf "no data exn :%s" exn.Message
+              let results = values |> Array.tryHead
 
               Expect.equal results (Some testData) "Insert test data is the same the readed testdata"
           }
@@ -134,7 +121,7 @@ let simpleTest =
               do!
                   azureCon
                   |> AzureTable.table TestTable
-                  |> AzureTable.insert (testData.PartKey, testData.RowKey) (fun set ->
+                  |> AzureTable.upsert (testData.PartKey, testData.RowKey) (fun set ->
                       set.add "Date" testData.Date
                       set.add "Value" testData.Value
                       set.add "ValueDecimal" testData.ValueDecimal
@@ -173,7 +160,7 @@ let simpleTest =
               do!
                   azureCon
                   |> AzureTable.table TestTable
-                  |> AzureTable.insert (testData.PartKey, testData.RowKey) (fun set ->
+                  |> AzureTable.upsert (testData.PartKey, testData.RowKey) (fun set ->
                       set.add "Date" testData.Date
                       set.add "Value" testData.Value
                       set.add "ValueDecimal" testData.ValueDecimal
@@ -211,7 +198,7 @@ let simpleTest =
               do!
                   azureCon
                   |> AzureTable.table TestTable
-                  |> AzureTable.insert (testData.PartKey, testData.RowKey) (fun set ->
+                  |> AzureTable.upsert (testData.PartKey, testData.RowKey) (fun set ->
                       set.add "Date" testData.Date
                       set.add "Value" testData.Value
                       set.add "ValueDecimal" testData.ValueDecimal
@@ -226,14 +213,7 @@ let simpleTest =
                   |> AzureTable.execute (fun read -> read.timeStamp)
 
               let data =
-                  timeStamps
-                  |> function
-                      | Ok r ->
-                          printfn "%A" r
-                          (r |> Array.tryHead).IsSome
-                      | Error (exn: Exception) ->
-                          printfn "no data exn :%s" exn.Message
-                          false
+                  timeStamps |> Array.tryHead |> Option.isSome
 
               Expect.isTrue data "Timestamp isn't there"
           }
@@ -250,7 +230,7 @@ let simpleTest =
                 do!
                     azureCon
                     |> AzureTable.table TestTable
-                    |> AzureTable.insertBatch testData (fun d ->
+                    |> AzureTable.upsertBatch testData (fun d ->
                         let set = AzureTackleSetEntity(d.PartKey, d.RowKey)
                         set.add "Date" d.Date
                         set.add "Exists" d.Exists
@@ -264,15 +244,7 @@ let simpleTest =
                     |> AzureTable.filter (RowKey testData.[0].RowKey)
                     |> AzureTable.execute (fun read -> read.timeStamp)
 
-                let data =
-                    timeStamps
-                    |> function
-                        | Ok r ->
-                            printfn "%A" r
-                            (r |> Array.tryHead).IsSome
-                        | Error (exn: Exception) ->
-                            printfn "no data exn :%s" exn.Message
-                            false
+                let data = timeStamps |> Array.tryHead |> Option.isSome
 
                 Expect.isTrue data "Timestamp isn't there"
           }

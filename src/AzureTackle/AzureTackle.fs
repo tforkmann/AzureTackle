@@ -252,20 +252,20 @@ module Table =
                 return Some result
         }
 
-    let query (filter: string option) (table: TableClient) token : Task<Azure.Pageable<'a>> =
+    let query (filter: string option) (table: TableClient) : Task<Azure.Pageable<'a>> =
         task {
 
             match filter with
-            | Some f -> return table.Query<'a>(f, Nullable(1500), [||], token)
-            | None -> return table.Query<'a>("", Nullable(1500), [||], token)
+            | Some f -> return table.Query<'a>(f, Nullable(1500), [||], CancellationToken.None)
+            | None -> return table.Query<'a>("", Nullable(1500), [||],  CancellationToken.None)
         }
 
-    let queryAsync (filter: string option) (table: TableClient) token : Task<Azure.AsyncPageable<'a>> =
+    let queryAsync (filter: string option) (table: TableClient) : Task<Azure.AsyncPageable<'a>> =
         task {
 
             match filter with
-            | Some f -> return table.QueryAsync<'a>(f, Nullable(1500), [||], token)
-            | None -> return table.QueryAsync<'a>("", Nullable(1500), [||], token)
+            | Some f -> return table.QueryAsync<'a>(f, Nullable(1500), [||], CancellationToken.None)
+            | None -> return table.QueryAsync<'a>("", Nullable(1500), [||], CancellationToken.None)
         }
 
 [<RequireQualifiedAccess>]
@@ -277,29 +277,22 @@ module AzureTable =
           TableName: string option
           AzureAccount: AzureAccount option }
 
-    type StorageOption =
-        { Stage: Stage option
-          DevStorage: AzureTableConfig option
-          ProdStorage: AzureTableConfig }
-
     type TableProps =
         { Filter: AzureFilter option
           FilterReceive: (string * string) option
-          StorageOption: StorageOption option
-          Token: CancellationToken }
+          AzureTableConfig: AzureTableConfig option }
 
     let private defaultAzConfig () =
         { AzureTable = None
           TableName = None
           AzureAccount = None }
 
-    let private defaultProps (token) =
+    let private defaultProps () =
         { Filter = None
           FilterReceive = None
-          StorageOption = None
-          Token = token }
+          AzureTableConfig = None}
 
-    let connect (connectionString: string, token) =
+    let connect (connectionString: string) =
         let connection =
             AzureConnection connectionString
 
@@ -307,91 +300,40 @@ module AzureTable =
             { defaultAzConfig () with
                 AzureAccount = Some(connection.Connect()) }
 
-        let initStorage =
-            { Stage = None
-              ProdStorage = initAzConfig
-              DevStorage = None }
+        { defaultProps () with
+            AzureTableConfig = Some initAzConfig }
 
-        { defaultProps (token) with
-            StorageOption = Some initStorage }
 
-    let connectWithStages (connectionStringProd: string, connectionStringDev: string, stage: Stage, token) =
-        let connection =
-            AzureConnection connectionStringProd
-
-        let connectionDev =
-            AzureConnection connectionStringDev
-
-        let initAzConfig =
-            { defaultAzConfig () with
-                AzureAccount = Some(connection.Connect()) }
-
-        let initAzConfigDev =
-            { defaultAzConfig () with
-                AzureAccount = Some(connectionDev.Connect()) }
-
-        { defaultProps (token) with
-            StorageOption =
-                Some
-                    { Stage = Some stage
-                      ProdStorage = initAzConfig
-                      DevStorage = Some initAzConfigDev } }
-
-    let connectWithTableServiceClient (tableServiceClient: TableServiceClient, token) =
+    let connectWithTableServiceClient (tableServiceClient: TableServiceClient) =
         let connection =
             UseTableServiceClient tableServiceClient
         let initAzConfig =
             { defaultAzConfig () with
                 AzureAccount = Some(connection.Connect()) }
 
-        { defaultProps (token) with
-            StorageOption = Some
-                {   Stage = None
-                    ProdStorage = initAzConfig
-                    DevStorage = None } }
+        { defaultProps () with
+            AzureTableConfig = Some initAzConfig }
 
     let table tableName (props: TableProps) =
         try
-            let newStorageOption =
-                match props.StorageOption with
-                | Some storageOption ->
-                    match storageOption.DevStorage with
-                    | Some backup ->
-                        match backup.AzureAccount, storageOption.ProdStorage.AzureAccount with
-                        | Some backUpAcc, Some normalAcc ->
-
-                            { storageOption with
-                                DevStorage =
-                                    Some
-                                        { backup with
-                                            AzureTable = Some(getAndCreateTable tableName backUpAcc)
-                                            TableName = Some tableName }
-                                ProdStorage =
-                                    { storageOption.ProdStorage with
-                                        AzureTable = Some(getAndCreateTable tableName normalAcc)
-                                        TableName = Some tableName } }
-                        | _ ->
-
-                            printfn "please use connect to initialize the Azure backup connection"
-                            failwith "please use connect to initialize the Azure backup connection"
+            let newAzureTableConfig =
+                match props.AzureTableConfig with
+                | Some azureTableConfig ->
+                    match azureTableConfig.AzureAccount with
+                    | Some azureAccount ->
+                        {  azureTableConfig with
+                            AzureTable =  Some(getAndCreateTable tableName azureAccount)
+                            TableName = Some tableName }
                     | None ->
-                        match storageOption.ProdStorage.AzureAccount with
-                        | Some normalAcc ->
-                            { storageOption with
-                                ProdStorage =
-                                    { storageOption.ProdStorage with
-                                        AzureTable = Some(getAndCreateTable tableName normalAcc)
-                                        TableName = Some tableName } }
-                        | _ ->
-                            printfn "please use connect to initialize the Azure backup connection"
-                            failwith "please use connect to initialize the Azure backup connection"
+                        printfn "please use connect to initialize the Azure connection"
+                        failwith "please use connect to initialize the Azure connection"
 
                 | None ->
                     printfn "please use connect to initialize the Azure connection"
                     failwith "please use connect to initialize the Azure connection"
 
             { props with
-                StorageOption = Some newStorageOption }
+                AzureTableConfig = Some newAzureTableConfig }
         with exn ->
             failwithf "Could not get a table %s" exn.Message
 
@@ -405,35 +347,24 @@ module AzureTable =
 
 
     let getTable props =
-        let storageOption =
-            match props.StorageOption with
+        let azureTableConfig =
+            match props.AzureTableConfig with
             | Some x -> x
             | _ -> failwith "please add a storage account"
-
-        match storageOption.ProdStorage.AzureTable with
+        printfn "AzureTableConfig: %A" azureTableConfig
+        match azureTableConfig.AzureTable with
         | Some table -> table
         | None -> failwith "please add a table"
 
-    let findDevTable props =
-        match props.StorageOption with
-        | Some storageOption ->
-            match storageOption.DevStorage with
-            | Some devStorage ->
-                match devStorage.AzureTable with
-                | Some table -> Some table
-                | None -> None
-            | _ -> None
-        | _ -> None
-
     let receive (read: AzureTackleRowEntity -> 't) (props: TableProps) =
         task {
-            let storageOption =
-                match props.StorageOption with
+            let azureTableConfig =
+                match props.AzureTableConfig with
                 | Some x -> x
                 | _ -> failwith "please add a storage account"
 
             let azureTable =
-                match storageOption.ProdStorage.AzureTable with
+                match azureTableConfig.AzureTable with
                 | Some table -> table
                 | None -> failwith "please add a table"
 
@@ -460,23 +391,26 @@ module AzureTable =
                     | Some filters -> filters |> toQuery
                     | None -> None
 
-                let! results = query applyFilter azureTable props.Token
+                let! results = query applyFilter azureTable
                 let results = results |> Seq.toList
 
                 return
-                    Ok
-                        [| for result in results ->
+                    [| for result in results ->
                                let e = AzureTackleRowEntity(result)
                                read e |]
             with exn ->
-                return Error exn
+                return failwithf "Execute failed with exn: %s" exn.Message
         }
+
     // let executeAsync (read: AzureTackleRowEntity -> 't,pages) (props: TableProps) =
     //     task {
     //         try
     //             let azureTable = getTable props
-    //             let filter = appendFilters props.Filters
-    //             let! results = queryAsync filter azureTable props.Token
+    //             let applyFilter =
+    //                 match props.Filter with
+    //                 | Some filters -> filters |> toQuery
+    //                 | None -> None
+    //             let! results = queryAsync applyFilter azureTable props.Token
     //             let resultEnum = results.GetAsyncEnumerator()
 
     //             let! hello = resultEnum.MoveNextAsync().AsTask()
@@ -500,7 +434,7 @@ module AzureTable =
                     | Some filters -> filters |> toQuery
                     | None -> None
 
-                let! results = query applyFilter azureTable props.Token
+                let! results = query applyFilter azureTable
                 let results = results |> Seq.toList
                 return
                     [| for result in results ->
@@ -510,196 +444,60 @@ module AzureTable =
             | exn -> return failwithf "ExecuteDirect failed with exn: %s" exn.Message
         }
 
-    let insert (partKey, rowKey) (set: AzureTackleSetEntity -> TableEntity) (props: TableProps) =
+    let upsert (partKey, rowKey) (set: AzureTackleSetEntity -> TableEntity) (props: TableProps) =
         task {
             try
+                let azureTable = getTable props
                 let entity =
                     AzureTackleSetEntity(partKey, rowKey)
                     |> set
 
-                match props.StorageOption with
-                | Some sOption ->
-                    match sOption.Stage with
-                    | Some stage ->
-                        match stage with
-                        | Dev ->
-                            match findDevTable props with
-                            | Some devTable ->
-                                let! _ = devTable.UpsertEntityAsync(entity, TableUpdateMode.Replace, props.Token)
-                                return Ok()
-
-                            | _ -> return Ok()
-
-                        | Prod ->
-                            let azureTable = getTable props
-
-                            match findDevTable props with
-                            | Some devTable ->
-                                let! _ = devTable.UpsertEntityAsync(entity, TableUpdateMode.Replace, props.Token)
-                                return Ok()
-                            | None ->
-                                let! _ = azureTable.UpsertEntityAsync(entity, TableUpdateMode.Replace, props.Token)
-
-                                return Ok()
-                    | None ->
-                        let azureTable = getTable props
-                        let! _ = azureTable.UpsertEntityAsync(entity, TableUpdateMode.Replace, props.Token)
-                        return Ok()
-                | _ ->
-                    printfn "please use connect to initialize the Azure connection"
-                    return failwith "please use connect to initialize the Azure connection"
+                let! _ = azureTable.UpsertEntityAsync(entity, TableUpdateMode.Replace, CancellationToken.None)
+                return ()
             with exn ->
-                return Error exn
+                return failwithf "Upsert failed with exn: %s" exn.Message
         }
 
-    let insertBatch (messages: 'a array) (mapper: 'a -> TableEntity) (props: TableProps) =
+    let upsertBatch (messages: 'a array) (mapper: 'a -> TableEntity) (props: TableProps) =
         task {
             try
-                match props.StorageOption with
-                | Some sOption ->
-                    match sOption.Stage with
-                    | Some stage ->
-                        match stage with
-                        | Dev ->
-                            match findDevTable props with
-                            | Some devTable ->
-                                let actions =
-                                    messages
-                                    |> Array.map mapper
-                                    |> Array.map (fun entity ->
-                                        TableTransactionAction(TableTransactionActionType.UpsertReplace, entity))
+                let azureTable = getTable props
 
-                                let! _ = devTable.SubmitTransactionAsync(actions)
-                                return Ok()
+                let actions =
+                    messages
+                    |> Array.map mapper
+                    |> Array.map (fun entity ->
+                        TableTransactionAction(TableTransactionActionType.UpsertReplace, entity))
 
-                            | _ -> return Ok()
-
-                        | Prod ->
-                            let azureTable = getTable props
-
-                            let actions =
-                                messages
-                                |> Array.map mapper
-                                |> Array.map (fun entity ->
-                                    TableTransactionAction(TableTransactionActionType.UpsertReplace, entity))
-
-                            match findDevTable props with
-                            | Some devTable ->
-                                let! _ = devTable.SubmitTransactionAsync(actions)
-                                return Ok()
-                            | None ->
-                                let! _ = azureTable.SubmitTransactionAsync(actions)
-                                return Ok()
-                    | None ->
-
-                        let azureTable = getTable props
-
-                        let actions =
-                            messages
-                            |> Array.map mapper
-                            |> Array.map (fun entity ->
-                                TableTransactionAction(TableTransactionActionType.UpsertReplace, entity))
-
-                        let! _ = azureTable.SubmitTransactionAsync(actions)
-                        return Ok()
-                | _ ->
-                    printfn "please use connect to initialize the Azure connection"
-                    return failwith "please use connect to initialize the Azure connection"
+                let! _ = azureTable.SubmitTransactionAsync(actions)
+                return ()
             with exn ->
-                return Error exn
+                return failwithf "UpsertBatch failed with exn: %s" exn.Message
         }
 
     let delete (partKey, rowKey) (props: TableProps) =
         task {
             try
-                match props.StorageOption with
-                | Some sOption ->
-                    match sOption.Stage with
-                    | Some stage ->
-                        match stage with
-                        | Dev ->
-                            match findDevTable props with
-                            | Some devTable ->
-                                let! _ = devTable.DeleteEntityAsync(partKey, rowKey)
-                                return Ok()
+                let azureTable = getTable props
 
-                            | _ -> return Ok()
-
-                        | Prod ->
-                            let azureTable = getTable props
-
-                            match findDevTable props with
-                            | Some devTable ->
-                                let! _ = devTable.DeleteEntityAsync(partKey, rowKey)
-                                return Ok()
-                            | None ->
-                                let! _ = azureTable.DeleteEntityAsync(partKey, rowKey)
-
-                                return Ok()
-                    | None ->
-                        let azureTable = getTable props
-                        let! _ = azureTable.DeleteEntityAsync(partKey, rowKey)
-                        return Ok()
-                | _ ->
-                    printfn "please use connect to initialize the Azure connection"
-                    return failwith "please use connect to initialize the Azure connection"
+                let! _ = azureTable.DeleteEntityAsync(partKey, rowKey)
+                return ()
             with exn ->
-                return Error exn
+                return failwithf "Delete failed with exn: %s" exn.Message
         }
 
     let deleteBatch (messages: 'a array) (mapper: 'a -> TableEntity) (props: TableProps) =
         task {
             try
-                match props.StorageOption with
-                | Some sOption ->
-                    match sOption.Stage with
-                    | Some stage ->
-                        match stage with
-                        | Dev ->
-                            match findDevTable props with
-                            | Some devTable ->
-                                let actions =
-                                    messages
-                                    |> Array.map mapper
-                                    |> Array.map (fun entity ->
-                                        TableTransactionAction(TableTransactionActionType.Delete, entity))
+                let azureTable = getTable props
+                let actions =
+                    messages
+                    |> Array.map mapper
+                    |> Array.map (fun entity ->
+                        TableTransactionAction(TableTransactionActionType.Delete, entity))
+                let! _ = azureTable.SubmitTransactionAsync(actions)
+                return ()
 
-                                let! _ = devTable.SubmitTransactionAsync(actions)
-                                return Ok()
-
-                            | _ -> return Ok()
-
-                        | Prod ->
-                            let azureTable = getTable props
-
-                            let actions =
-                                messages
-                                |> Array.map mapper
-                                |> Array.map (fun entity ->
-                                    TableTransactionAction(TableTransactionActionType.Delete, entity))
-
-                            match findDevTable props with
-                            | Some devTable ->
-                                let! _ = devTable.SubmitTransactionAsync(actions)
-                                return Ok()
-                            | None ->
-                                let! _ = azureTable.SubmitTransactionAsync(actions)
-                                return Ok()
-                    | None ->
-
-                        let azureTable = getTable props
-
-                        let actions =
-                            messages
-                            |> Array.map mapper
-                            |> Array.map (fun entity ->
-                                TableTransactionAction(TableTransactionActionType.Delete, entity))
-
-                        let! _ = azureTable.SubmitTransactionAsync(actions)
-                        return Ok()
-                | _ ->
-                    printfn "please use connect to initialize the Azure connection"
-                    return failwith "please use connect to initialize the Azure connection"
             with exn ->
-                return Error exn
+                return failwithf "DeleteBatch failed with exn: %s" exn.Message
         }

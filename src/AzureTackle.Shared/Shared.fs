@@ -4,14 +4,6 @@ namespace AzureTackle
 module Shared =
     open System
 
-    type Stage =
-        | Dev
-        | Prod
-        member this.Value =
-            match this with
-            | Dev -> "dev"
-            | Prod -> "prod"
-
     module SortedRowKey =
         let toSortedRowKey (dateTime: DateTime) =
             String.Format("{0:D19}", DateTime.MaxValue.Ticks - dateTime.Ticks)

@@ -6,6 +6,7 @@ open Azure.Data.Tables
 
 type Props =
     | FLT
+    | DEC
     | INT32
     | BIGINT
     | TXT
@@ -20,6 +21,7 @@ type AzureTackleRowEntity(entity: TableEntity) =
         let columnTypStr =
             match columnType with
             | FLT -> "float"
+            | DEC -> "decimal"
             | INT32 -> "int32"
             | TXT -> "string"
             | DTO -> "datetimeoffset"
@@ -108,7 +110,7 @@ type AzureTackleRowEntity(entity: TableEntity) =
 
         member __.decimal(column: string): decimal =
             try
-                let prop = getProperty column FLT entity
+                let prop = getProperty column DEC entity
                 (box prop) :?> decimal
             with exn ->
                 failwithf
@@ -120,7 +122,7 @@ type AzureTackleRowEntity(entity: TableEntity) =
 
         member __.decimalOrNone(column: string): decimal option =
             try
-                getOptionalProperty column FLT entity
+                getOptionalProperty column DEC entity
                 |> Option.map (fun prop -> (box prop) :?> decimal)
             with exn ->
                 failwithf
