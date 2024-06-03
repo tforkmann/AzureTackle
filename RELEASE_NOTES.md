@@ -1,3 +1,5 @@
+#### 2.0.2 - 2024-06-03
+* Add withTableClient
 #### 2.0.1 - 2024-06-03
 * Working version with Azure.Data.Tables SDK
 #### 2.0.0-alpha004 - 2024-06-03

@@ -344,6 +344,18 @@ module AzureTable =
                 return failwithf "Could not get a table %s" exn.Message
         }
 
+    let withTableClient (tableServiceClient: TableServiceClient,tableName:string) =
+        let connection =
+            UseTableServiceClient tableServiceClient
+        let initAzConfig =
+            { defaultAzConfig () with
+                AzureAccount = Some(connection.Connect()) }
+        let props =
+            { defaultProps () with
+                AzureTableConfig = Some initAzConfig }
+        table tableName props
+
+
     let filter (filter: AzureFilter) (getProps: Task<TableProps>) =
         task {
             let! props = getProps
