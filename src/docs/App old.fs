@@ -1,5 +1,4 @@
-module Docs.App
-
+module App
 open Elmish
 open Elmish.React
 
@@ -8,11 +7,11 @@ open Elmish.Debug
 open Elmish.HMR
 #endif
 
-Program.mkProgram View.init View.update View.AppView
+Program.mkProgram State.init State.update View.view
 #if DEBUG
 |> Program.withConsoleTrace
 #endif
-|> Program.withReactSynchronous "safer-app"
+|> Program.withReactBatched "elmish-app"
 #if DEBUG
 |> Program.withDebugger
 #endif

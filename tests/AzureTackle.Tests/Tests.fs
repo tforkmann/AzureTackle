@@ -43,12 +43,12 @@ let simpleTest =
                 azureCon
                 |> AzureTable.table TestTable
                 |> AzureTable.upsert (testData.PartKey, testData.RowKey) (fun set ->
-                    set.add "Date" testData.Date
-                    set.add "Value" testData.Value
-                    set.add "ValueDecimal" testData.ValueDecimal
-                    set.add "Exists" testData.Exists
-                    set.add "Text" testData.Text
-                    set.returnEntity)
+                    set.Add ("Date", testData.Date)
+                    set.Add ("Value", testData.Value)
+                    set.Add ("ValueDecimal",testData.ValueDecimal)
+                    set.Add ("Exists", testData.Exists)
+                    set.Add ("Text", testData.Text)
+                    set)
 
             let! values =
                 azureCon
@@ -83,12 +83,12 @@ let simpleTest =
                   azureCon
                   |> AzureTable.table TestTable
                   |> AzureTable.upsert (testData.PartKey, testData.RowKey) (fun set ->
-                      set.add "Date" testData.Date
-                      set.add "Value" testData.Value
-                      set.add "ValueDecimal" testData.ValueDecimal
-                      set.add "Exists" testData.Exists
-                      set.add "Text" testData.Text
-                      set.returnEntity)
+                      set.Add ("Date", testData.Date)
+                      set.Add ("Value", testData.Value)
+                      set.Add ("ValueDecimal", testData.ValueDecimal)
+                      set.Add ("Exists", testData.Exists)
+                      set.Add ("Text", testData.Text)
+                      set)
 
               let! values =
                   azureCon
@@ -122,12 +122,12 @@ let simpleTest =
                   azureCon
                   |> AzureTable.table TestTable
                   |> AzureTable.upsert (testData.PartKey, testData.RowKey) (fun set ->
-                      set.add "Date" testData.Date
-                      set.add "Value" testData.Value
-                      set.add "ValueDecimal" testData.ValueDecimal
-                      set.add "Exists" testData.Exists
-                      set.add "Text" testData.Text
-                      set.returnEntity)
+                      set.Add ("Date", testData.Date)
+                      set.Add ("Value", testData.Value)
+                      set.Add ("ValueDecimal", testData.ValueDecimal)
+                      set.Add ("Exists", testData.Exists)
+                      set.Add ("Text", testData.Text)
+                      set)
 
 
               let! value =
@@ -161,12 +161,12 @@ let simpleTest =
                   azureCon
                   |> AzureTable.table TestTable
                   |> AzureTable.upsert (testData.PartKey, testData.RowKey) (fun set ->
-                      set.add "Date" testData.Date
-                      set.add "Value" testData.Value
-                      set.add "ValueDecimal" testData.ValueDecimal
-                      set.add "Exists" testData.Exists
-                      set.add "Text" testData.Text
-                      set.returnEntity)
+                      set.Add ("Date", testData.Date)
+                      set.Add ("Value", testData.Value)
+                      set.Add ("ValueDecimal", testData.ValueDecimal)
+                      set.Add ("Exists", testData.Exists)
+                      set.Add ("Text", testData.Text)
+                      set)
 
 
               let! value =
@@ -199,12 +199,12 @@ let simpleTest =
                   azureCon
                   |> AzureTable.table TestTable
                   |> AzureTable.upsert (testData.PartKey, testData.RowKey) (fun set ->
-                      set.add "Date" testData.Date
-                      set.add "Value" testData.Value
-                      set.add "ValueDecimal" testData.ValueDecimal
-                      set.add "Exists" testData.Exists
-                      set.add "Text" testData.Text
-                      set.returnEntity)
+                      set.Add ("Date", testData.Date)
+                      set.Add ("Value", testData.Value)
+                      set.Add ("ValueDecimal", testData.ValueDecimal)
+                      set.Add ("Exists", testData.Exists)
+                      set.Add ("Text", testData.Text)
+                      set)
 
               let! timeStamps =
                   azureCon
@@ -231,13 +231,13 @@ let simpleTest =
                     azureCon
                     |> AzureTable.table TestTable
                     |> AzureTable.upsertBatch testData (fun d ->
-                        let set = AzureTackleSetEntity(d.PartKey, d.RowKey)
-                        set.add "Date" d.Date
-                        set.add "Exists" d.Exists
-                        set.add "Text" d.Text
-                        set.add "Value" d.Value
-                        set.add "ValueDecimal" d.ValueDecimal
-                        set.returnEntity)
+                        let set = TableEntity(d.PartKey, d.RowKey)
+                        set.Add ("Date", d.Date)
+                        set.Add ("Exists", d.Exists)
+                        set.Add ("Text", d.Text)
+                        set.Add ("Value", d.Value)
+                        set.Add ("ValueDecimal", d.ValueDecimal)
+                        set)
                 let! timeStamps =
                     azureCon
                     |> AzureTable.table TestTable
@@ -266,13 +266,13 @@ let simpleTest =
                     azureCon
                     |> AzureTable.table TestTable
                     |> AzureTable.deleteBatch values (fun d ->
-                        let set = AzureTackleSetEntity(d.PartKey, d.RowKey)
-                        set.add "Date" d.Date
-                        set.add "Exists" d.Exists
-                        set.add "Text" d.Text
-                        set.add "Value" d.Value
-                        set.add "ValueDecimal" d.ValueDecimal
-                        set.returnEntity)
+                        let set = TableEntity(d.PartKey, d.RowKey)
+                        set.Add ("Date", d.Date)
+                        set.Add ("Exists", d.Exists)
+                        set.Add ("Text", d.Text)
+                        set.Add ("Value", d.Value)
+                        set.Add ("ValueDecimal", d.ValueDecimal)
+                        set)
                 let! values =
                     azureCon
                     |> AzureTable.table TestTable

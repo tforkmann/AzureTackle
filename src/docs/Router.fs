@@ -1,6 +1,8 @@
-module Router
+module Docs.Router
 
+open Browser.Types
 open Feliz.Router
+open Fable.Core.JsInterop
 
 type Page =
     | AzureTackle
@@ -10,23 +12,41 @@ type Page =
     | ParameterizedQuery
     | InsertData
 
-let defaultPage = AzureTackle
+[<RequireQualifiedAccess>]
+module Page =
+    let defaultPage = AzureTackle
 
-let parseUrl =
-    function
-    | [ "" ] -> AzureTackle
-    | [ "querytable" ] -> QueryTable
-    | [ "handlenullvalues" ] -> HandleNullValues
-    | [ "providingdefaultvalues" ] -> ProvidingDefaultValues
-    | [ "parameterizedquery" ] -> ParameterizedQuery
-    | [ "insertdata" ] -> InsertData
-    | _ -> defaultPage
+    let parseFromUrlSegments =
+        function
+        | [ "" ] -> AzureTackle
+        | [ "querytable" ] -> QueryTable
+        | [ "handlenullvalues" ] -> HandleNullValues
+        | [ "providingdefaultvalues" ] -> ProvidingDefaultValues
+        | [ "parameterizedquery" ] -> ParameterizedQuery
+        | [ "insertdata" ] -> InsertData
+        | _ -> defaultPage
 
-let getHref =
-    function
-    | AzureTackle -> Router.format ("")
-    | QueryTable -> Router.format ("querytable")
-    | HandleNullValues -> Router.format ("handlenullvalues")
-    | ProvidingDefaultValues -> Router.format ("providingdefaultvalues")
-    | ParameterizedQuery -> Router.format ("parameterizedquery")
-    | InsertData -> Router.format ("insertdata")
+    let noQueryString segments : string list * (string * string) list = segments, []
+
+    let toUrlSegments =
+        function
+        | AzureTackle -> [] |> noQueryString
+        | QueryTable -> ["querytable"] |> noQueryString
+        | HandleNullValues -> ["handlenullvalues"] |> noQueryString
+        | ProvidingDefaultValues -> ["providingdefaultvalues"] |> noQueryString
+        | ParameterizedQuery -> ["parameterizedquery"] |> noQueryString
+        | InsertData -> [ "insertdata" ] |> noQueryString
+
+[<RequireQualifiedAccess>]
+module Router =
+    let goToUrl (e: MouseEvent) =
+        e.preventDefault ()
+        let href: string = !!e.currentTarget?attributes?href?value
+        Router.navigate href
+
+    let navigatePage (p: Page) =
+        p |> Page.toUrlSegments |> Router.navigate
+
+[<RequireQualifiedAccess>]
+module Cmd =
+    let navigatePage (p: Page) = p |> Page.toUrlSegments |> Cmd.navigate

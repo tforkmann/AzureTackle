@@ -1,0 +1,18 @@
+@charset "utf-8";
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* a.link {
+    @apply text-primary underline font-semibold;
+} */
+
+.description {
+    @apply my-5;
+}
+
+.code {
+    @apply bg-base-300 px-1 py-1;
+}
+

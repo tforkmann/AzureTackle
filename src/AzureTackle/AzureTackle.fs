@@ -444,12 +444,12 @@ module AzureTable =
             | exn -> return failwithf "ExecuteDirect failed with exn: %s" exn.Message
         }
 
-    let upsert (partKey, rowKey) (set: AzureTackleSetEntity -> TableEntity) (props: TableProps) =
+    let upsert (partKey, rowKey) (set: TableEntity -> TableEntity) (props: TableProps) =
         task {
             try
                 let azureTable = getTable props
                 let entity =
-                    AzureTackleSetEntity(partKey, rowKey)
+                    TableEntity(partKey, rowKey)
                     |> set
 
                 let! _ = azureTable.UpsertEntityAsync(entity, TableUpdateMode.Replace, CancellationToken.None)

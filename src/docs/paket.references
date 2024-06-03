@@ -1,9 +1,9 @@
-group Docs
+Fable.Elmish.HMR
 Feliz.Router
 Zanaptak.TypedCssClasses
-Fable.SimpleHttp
-Feliz.ElmishComponents
-Feliz.UseDeferred
-Feliz.Popover
 Feliz.Markdown
+Fable.Elmish.Debugger
 Feliz.Bulma
+Feliz.DaisyUI
+Feliz.UseElmish
+Feliz.ChartJS

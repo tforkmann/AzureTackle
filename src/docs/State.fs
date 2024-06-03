@@ -2,7 +2,6 @@ module State
 
 open Domain
 open Elmish
-open Chia.Style
 let init () = Model.init, Cmd.none
 
 let private delay (msg:Msg) =

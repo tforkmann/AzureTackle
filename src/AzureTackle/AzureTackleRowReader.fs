@@ -275,15 +275,3 @@ type AzureTackleRowEntity(entity: TableEntity) =
                     entity.PartitionKey
                     entity.RowKey
                     exn.Message
-
-type AzureTackleSetEntity(partKey, rowKey: string) =
-    let entity = TableEntity(partKey, rowKey)
-
-    member __.returnEntity = entity
-    member __.add (propName: string) (value: obj) =
-        entity.Add (propName,value)
-        ()
-    member __.addOptional (propName: string) (value: obj option) =
-        match value with
-        | Some x -> entity.Add (propName,x)
-        | None -> ()
