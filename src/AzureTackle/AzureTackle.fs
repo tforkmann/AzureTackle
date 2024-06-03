@@ -7,6 +7,7 @@ open System.Threading.Tasks
 open FSharp.Control
 open System.Text
 open System.Globalization
+open System.Runtime.CompilerServices
 
 [<AutoOpen>]
 module Filter =
@@ -343,13 +344,19 @@ module AzureTable =
                 return failwithf "Could not get a table %s" exn.Message
         }
 
-    let filter (filter: AzureFilter) (props: TableProps) =
+    let filter (filter: AzureFilter) (getProps: Task<TableProps>) =
+        task {
+            let! props = getProps
+            return { props with Filter = Some filter }
+        }
 
-        { props with Filter = Some filter }
-
-    let filterReceive (partKey, rowKey) (props: TableProps) =
-        { props with
-            FilterReceive = Some(partKey, rowKey) }
+    let filterReceive (partKey, rowKey) (getProps: Task<TableProps>) =
+        task {
+            let! props = getProps
+            return
+                { props with
+                    FilterReceive = Some(partKey, rowKey) }
+        }
 
 
     let getTable props =
@@ -357,13 +364,13 @@ module AzureTable =
             match props.AzureTableConfig with
             | Some x -> x
             | _ -> failwith "please add a storage account"
-        printfn "AzureTableConfig: %A" azureTableConfig
         match azureTableConfig.AzureTable with
         | Some table -> table
         | None -> failwith "please add a table"
 
-    let receive (read: AzureTackleRowEntity -> 't) (props: TableProps) =
+    let receive (read: AzureTackleRowEntity -> 't) (getProps: Task<TableProps>) =
         task {
+            let! props = getProps
             let azureTableConfig =
                 match props.AzureTableConfig with
                 | Some x -> x
@@ -387,9 +394,10 @@ module AzureTable =
                 |> Option.map read
         }
 
-    let execute (read: AzureTackleRowEntity -> 't) (props: TableProps) =
+    let execute (read: AzureTackleRowEntity -> 't) (getProps: Task<TableProps>) =
         task {
             try
+                let! props = getProps
                 let azureTable = getTable props
 
                 let applyFilter =
@@ -431,9 +439,10 @@ module AzureTable =
     //         | exn -> return Error exn
     //     }
 
-    let executeDirect (read: AzureTackleRowEntity -> 't) (props: TableProps) =
+    let executeDirect (read: AzureTackleRowEntity -> 't) (getProps: Task<TableProps>) =
         task {
             try
+                let! props = getProps
                 let azureTable = getTable props
                 let applyFilter =
                     match props.Filter with
@@ -450,9 +459,10 @@ module AzureTable =
             | exn -> return failwithf "ExecuteDirect failed with exn: %s" exn.Message
         }
 
-    let upsert (partKey, rowKey) (set: TableEntity -> TableEntity) (props: TableProps) =
+    let upsertInline (partKey, rowKey) (set: TableEntity -> TableEntity) (getProps: Task<TableProps>) =
         task {
             try
+                let! props = getProps
                 let azureTable = getTable props
                 let entity =
                     TableEntity(partKey, rowKey)
@@ -463,10 +473,21 @@ module AzureTable =
             with exn ->
                 return failwithf "Upsert failed with exn: %s" exn.Message
         }
-
-    let upsertBatch (messages: 'a array) (mapper: 'a -> TableEntity) (props: TableProps) =
+    let upsert (entity: TableEntity) (getProps: Task<TableProps>) =
         task {
             try
+                let! props = getProps
+                let azureTable = getTable props
+                let! _ = azureTable.UpsertEntityAsync(entity, TableUpdateMode.Replace, CancellationToken.None)
+                return ()
+            with exn ->
+                return failwithf "Upsert failed with exn: %s" exn.Message
+        }
+
+    let upsertBatchInline (messages: 'a array) (mapper: 'a -> TableEntity) (getProps: Task<TableProps>) =
+        task {
+            try
+                let! props = getProps
                 let azureTable = getTable props
 
                 let actions =
@@ -480,10 +501,27 @@ module AzureTable =
             with exn ->
                 return failwithf "UpsertBatch failed with exn: %s" exn.Message
         }
-
-    let delete (partKey, rowKey) (props: TableProps) =
+    let upsertBatch (entities: TableEntity array)  (getProps: Task<TableProps>) =
         task {
             try
+                let! props = getProps
+                let azureTable = getTable props
+
+                let actions =
+                    entities
+                    |> Array.map (fun entity ->
+                        TableTransactionAction(TableTransactionActionType.UpsertReplace, entity))
+
+                let! _ = azureTable.SubmitTransactionAsync(actions)
+                return ()
+            with exn ->
+                return failwithf "UpsertBatch failed with exn: %s" exn.Message
+        }
+
+    let delete (partKey, rowKey) (getProps: Task<TableProps>) =
+        task {
+            try
+                let! props = getProps
                 let azureTable = getTable props
 
                 let! _ = azureTable.DeleteEntityAsync(partKey, rowKey)
@@ -492,9 +530,10 @@ module AzureTable =
                 return failwithf "Delete failed with exn: %s" exn.Message
         }
 
-    let deleteBatch (messages: 'a array) (mapper: 'a -> TableEntity) (props: TableProps) =
+    let deleteBatch (messages: 'a array) (mapper: 'a -> TableEntity) (getProps: Task<TableProps>) =
         task {
             try
+                let! props = getProps
                 let azureTable = getTable props
                 let actions =
                     messages
@@ -507,3 +546,35 @@ module AzureTable =
             with exn ->
                 return failwithf "DeleteBatch failed with exn: %s" exn.Message
         }
+
+[<Extension>]
+type TableEntityExtensions =
+    /// Adds a property to the entity to allow chaining.
+    ///
+    /// # Parameters
+    /// - `entity`: The entity to add the property to.
+    /// - `key`: The key of the property.
+    /// - `value`: The value of the property.
+    [<Extension>]
+    static member inline Append(entity:TableEntity, key:string, value:obj) =
+        entity.Add(key,value)
+        entity
+
+    /// Adds an optional property to the entity to allow chaining.
+    /// If the value is `None`, the property is not added.
+    /// If the value is `Some`, the property is added.
+    ///
+    /// # Parameters
+    /// - `entity`: The entity to add the property to.
+    /// - `key`: The key of the property.
+    /// - `value`: The value of the property.
+    [<Extension>]
+    static member inline AppendOptional(entity:TableEntity, key:string, value:obj option) =
+        match value with
+        | Some value ->
+            entity.Add(key,value)
+        | None ->
+            ()
+
+        entity
+

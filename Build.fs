@@ -217,26 +217,20 @@ let pushPackage _ =
         runDotNet cmd buildDir)
 Target.create "Push" (fun _ -> pushPackage [] )
 
-let docsSrcPath = Path.getFullName "./src/docs"
+let docsSrcPath = Path.getFullName "./src/Docs"
 let docsDeployPath = "docs"
 
 Target.create "InstallDocs" (fun _ ->
 
-    runTool yarnTool "install --frozen-lockfile" docsSrcPath
+    runTool npmTool "install --frozen-lockfile" "."
     runDotNet "restore" docsSrcPath )
 
-Target.create "PublishDocs" (fun _ ->
-    let docsDeployLocalPath = (docsSrcPath </> "deploy")
-    [ docsDeployPath; docsDeployLocalPath] |> Shell.cleanDirs
-    runTool yarnTool"webpack-cli -p" docsSrcPath
-    Shell.copyDir docsDeployPath docsDeployLocalPath FileFilter.allFiles
-)
+Target.create "PublishDocs" (fun _ -> run npm "run build" ".")
 
-
-Target.create "RunDocs" (fun _ -> runTool npmTool "webpack-dev-server" docsSrcPath)
+Target.create "RunDocs" (fun _ ->
+    run npm "run startdocs" ".")
 
 Target.runOrDefault "Build"
-
 
 let dependencies = [
 

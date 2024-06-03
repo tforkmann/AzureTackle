@@ -5,7 +5,8 @@ open Feliz.Router
 open Fable.Core.JsInterop
 
 type Page =
-    | AzureTackle
+    | Install
+    | Use
     | QueryTable
     | HandleNullValues
     | ProvidingDefaultValues
@@ -14,11 +15,11 @@ type Page =
 
 [<RequireQualifiedAccess>]
 module Page =
-    let defaultPage = AzureTackle
+    let defaultPage = Install
 
     let parseFromUrlSegments =
         function
-        | [ "" ] -> AzureTackle
+        | [ "use" ] -> Use
         | [ "querytable" ] -> QueryTable
         | [ "handlenullvalues" ] -> HandleNullValues
         | [ "providingdefaultvalues" ] -> ProvidingDefaultValues
@@ -30,7 +31,8 @@ module Page =
 
     let toUrlSegments =
         function
-        | AzureTackle -> [] |> noQueryString
+        | Install -> [] |> noQueryString
+        | Use -> ["use"] |> noQueryString
         | QueryTable -> ["querytable"] |> noQueryString
         | HandleNullValues -> ["handlenullvalues"] |> noQueryString
         | ProvidingDefaultValues -> ["providingdefaultvalues"] |> noQueryString

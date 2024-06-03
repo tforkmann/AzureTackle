@@ -42,7 +42,7 @@ let simpleTest =
             do!
                 azureCon
                 |> AzureTable.table TestTable
-                |> AzureTable.upsert (testData.PartKey, testData.RowKey) (fun set ->
+                |> AzureTable.upsertInline (testData.PartKey, testData.RowKey) (fun set ->
                     set.Add ("Date", testData.Date)
                     set.Add ("Value", testData.Value)
                     set.Add ("ValueDecimal",testData.ValueDecimal)
@@ -82,7 +82,7 @@ let simpleTest =
               do!
                   azureCon
                   |> AzureTable.table TestTable
-                  |> AzureTable.upsert (testData.PartKey, testData.RowKey) (fun set ->
+                  |> AzureTable.upsertInline (testData.PartKey, testData.RowKey) (fun set ->
                       set.Add ("Date", testData.Date)
                       set.Add ("Value", testData.Value)
                       set.Add ("ValueDecimal", testData.ValueDecimal)
@@ -121,7 +121,7 @@ let simpleTest =
               do!
                   azureCon
                   |> AzureTable.table TestTable
-                  |> AzureTable.upsert (testData.PartKey, testData.RowKey) (fun set ->
+                  |> AzureTable.upsertInline (testData.PartKey, testData.RowKey) (fun set ->
                       set.Add ("Date", testData.Date)
                       set.Add ("Value", testData.Value)
                       set.Add ("ValueDecimal", testData.ValueDecimal)
@@ -157,17 +157,20 @@ let simpleTest =
                     Exists = true
                     Text = "isWorking" }
 
+              let entity =
+                TableEntity(testData.PartKey, testData.RowKey)
+                    .Append("Date", testData.Date)
+                    .Append("Value", testData.Value)
+                    .Append("ValueDecimal", testData.ValueDecimal)
+                    .Append("Exists", testData.Exists)
+                    .Append("Text", testData.Text)
+
+
+
               do!
                   azureCon
                   |> AzureTable.table TestTable
-                  |> AzureTable.upsert (testData.PartKey, testData.RowKey) (fun set ->
-                      set.Add ("Date", testData.Date)
-                      set.Add ("Value", testData.Value)
-                      set.Add ("ValueDecimal", testData.ValueDecimal)
-                      set.Add ("Exists", testData.Exists)
-                      set.Add ("Text", testData.Text)
-                      set)
-
+                  |> AzureTable.upsert entity
 
               let! value =
                   azureCon
@@ -198,7 +201,7 @@ let simpleTest =
               do!
                   azureCon
                   |> AzureTable.table TestTable
-                  |> AzureTable.upsert (testData.PartKey, testData.RowKey) (fun set ->
+                  |> AzureTable.upsertInline (testData.PartKey, testData.RowKey) (fun set ->
                       set.Add ("Date", testData.Date)
                       set.Add ("Value", testData.Value)
                       set.Add ("ValueDecimal", testData.ValueDecimal)
@@ -227,17 +230,20 @@ let simpleTest =
                         ValueDecimal = 0.2m
                         Exists = true
                         Text = "isWorking" }|]
+                let entities =
+                    testData
+                    |> Array.map (fun d ->
+                        TableEntity(d.PartKey, d.RowKey)
+                            .Append("Date", d.Date)
+                            .Append("Exists", d.Exists)
+                            .Append("Text", d.Text)
+                            .Append("Value", d.Value)
+                            .Append("ValueDecimal", d.ValueDecimal))
                 do!
                     azureCon
                     |> AzureTable.table TestTable
-                    |> AzureTable.upsertBatch testData (fun d ->
-                        let set = TableEntity(d.PartKey, d.RowKey)
-                        set.Add ("Date", d.Date)
-                        set.Add ("Exists", d.Exists)
-                        set.Add ("Text", d.Text)
-                        set.Add ("Value", d.Value)
-                        set.Add ("ValueDecimal", d.ValueDecimal)
-                        set)
+                    |> AzureTable.upsertBatch entities
+
                 let! timeStamps =
                     azureCon
                     |> AzureTable.table TestTable

@@ -120,10 +120,7 @@ let private leftSide (p: Page) =
                         Daisy.menuTitle [ Html.span "Docs" ]
                         mi "Install" Install
                         mi "Use" Use
-                        mi "LineChart" LineChart
-                        mi "BarChart" BarChart
-                        mi "DoughnutChart" DoughnutChart
-                        mi "MixedChart" MixedChart
+                        mi "QueryTable" QueryTable
                         ]
                 ]
             ]
@@ -157,10 +154,8 @@ let AppView (state: State) (dispatch: Msg -> unit) =
         match state.Page with
         | Install -> "Installation", "/docs/install", Pages.Install.InstallView()
         | Use -> "How to use", "/docs/use", Pages.Use.UseView()
-        | LineChart -> "LineChart", "/linechart", Pages.LineChart.LineChartView()
-        | BarChart -> "BarChart", "/barchart", Pages.BarChart.BarChartView()
-        | DoughnutChart -> "DoughnutChart", "/linechart", Pages.DoughnutChart.DoughnutChartView()
-        | MixedChart -> "MixedChart", "/linechart", Pages.MixedChart.MixedChartView()
+        | QueryTable -> "QueryTable", "/querytable", Pages.QueryTable.QueryTable()
+        | _ -> "Not found", "", Html.text "Not found"
 
     React.router [
         router.hashMode
