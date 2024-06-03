@@ -15,19 +15,8 @@ type Props =
     | BINARY
 
 type AzureTackleRowEntity(entity: TableEntity) =
-    let columnDict = Dictionary<string, EntityProperty>()
-
-    do
-
-        entity.Properties
-        |> Seq.iter (fun keyPair -> columnDict.Add(keyPair.Key, keyPair.Value))
 
     let failToRead (column: string) (columnType: Props) (exn: Exception) =
-        let availableColumns =
-            columnDict.Keys
-            |> Seq.map (fun key -> sprintf "[%s]" key)
-            |> String.concat ", "
-
         let columnTypStr =
             match columnType with
             | FLT -> "float"
@@ -40,39 +29,39 @@ type AzureTackleRowEntity(entity: TableEntity) =
             | BINARY -> "binary"
 
         failwithf
-            "Could not read property '%s' as %s. Available columns are %s. Message: %s"
+            "Could not read property '%s' as %s. Message: %s"
             column
             columnTypStr
-            availableColumns
             exn.Message
 
     let getProperty (propName: string) (columnType: Props) (entity: TableEntity) =
-        let availableColumns =
-            columnDict.Keys
-            |> Seq.map (fun key -> sprintf "[%s]" key)
-            |> String.concat ", "
 
         try
-            entity.Properties.[propName]
-        with exn -> failToRead availableColumns columnType exn
+            match entity.TryGetValue propName with
+            | false, _ -> failwithf "Property %s not found in entity" propName
+            | true, v -> v
+        with exn -> failToRead propName columnType exn
 
-    let getOptionalProperty (propName: string) (entity: TableEntity) =
-        match entity.Properties.TryGetValue propName with
-        | true, v -> Some v
-        | _ -> None
+    let getOptionalProperty (propName: string) (columnType: Props) (entity: TableEntity) =
+
+        try
+            match entity.TryGetValue propName with
+            | true, v -> Some v
+            | _ -> None
+        with exn -> failToRead propName columnType exn
     with
-        member __.rowKey: RowKey = RowKey entity.RowKey
+        member __.rowKey = entity.RowKey
 
         member __.eTag: Azure.ETag = entity.ETag
 
         member __.partKey: string = entity.PartitionKey
 
-        member __.timeStamp: DateTimeOffset = entity.Timestamp
+        member __.timeStamp: DateTimeOffset Nullable = entity.Timestamp
 
-        member __.int(column: string): int =
+        member __.int(column: string)  =
             try
                 let prop = getProperty column INT32 entity
-                prop.Int32Value.Value
+                (box prop) :?> int
             with exn ->
                 failwithf
                     "Could not get INT32 value of property %s for entity %s %s. Message: %s"
@@ -83,8 +72,8 @@ type AzureTackleRowEntity(entity: TableEntity) =
 
         member __.intOrNone(column: string): int option =
             try
-                getOptionalProperty column entity
-                |> Option.map (fun prop -> prop.Int32Value.Value)
+                getOptionalProperty column INT32 entity
+                |> Option.map (fun prop -> (box prop) :?> int)
             with exn ->
                 failwithf
                     "Could not get INT32 value of property %s for entity %s %s. Message: %s"
@@ -96,7 +85,7 @@ type AzureTackleRowEntity(entity: TableEntity) =
         member __.float(column: string): float =
             try
                 let prop = getProperty column FLT entity
-                prop.DoubleValue.Value
+                (box prop) :?> float
             with exn ->
                 failwithf
                     "Could not get float value of property %s for entity %s %s. Message: %s"
@@ -107,8 +96,8 @@ type AzureTackleRowEntity(entity: TableEntity) =
 
         member __.floatOrNone(column: string): float option =
             try
-                getOptionalProperty column entity
-                |> Option.map (fun prop -> prop.DoubleValue.Value)
+                getOptionalProperty column FLT entity
+                |> Option.map (fun prop -> (box prop) :?> float)
             with exn ->
                 failwithf
                     "Could not get float value of property %s for entity %s %s. Message: %s"
@@ -120,7 +109,7 @@ type AzureTackleRowEntity(entity: TableEntity) =
         member __.string(column: string): string =
             try
                 let prop = getProperty column TXT entity
-                prop.StringValue
+                (box prop) :?> string
             with exn ->
                 failwithf
                     "Could not get string value of property %s for entity %s %s. Message: %s"
@@ -131,8 +120,8 @@ type AzureTackleRowEntity(entity: TableEntity) =
 
         member __.stringOrNone(column: string): string option =
             try
-                getOptionalProperty column entity
-                |> Option.map (fun prop -> prop.StringValue)
+                getOptionalProperty column TXT entity
+                |> Option.map (fun prop -> (box prop) :?> string)
             with exn ->
                 failwithf
                     "Could not get string value of property %s for entity %s %s. Message: %s"
@@ -144,7 +133,7 @@ type AzureTackleRowEntity(entity: TableEntity) =
         member __.dateTime(column: string): DateTime =
             try
                 let prop = getProperty column DTO entity
-                prop.DateTime.Value
+                (box prop) :?> DateTime
             with exn ->
                 failwithf
                     "Could not get datetime value of property %s for entity %s %s. Message: %s"
@@ -155,8 +144,8 @@ type AzureTackleRowEntity(entity: TableEntity) =
 
         member __.dateTimeOrNone(column: string): DateTime option =
             try
-                getOptionalProperty column entity
-                |> Option.map (fun prop -> prop.DateTime.Value)
+                getOptionalProperty column DTO entity
+                |> Option.map (fun prop -> (box prop) :?> DateTime)
             with exn ->
                 failwithf
                     "Could not get datetime value of property %s for entity %s %s. Message: %s"
@@ -168,7 +157,7 @@ type AzureTackleRowEntity(entity: TableEntity) =
         member __.dateTimeOffset(column: string): DateTimeOffset =
             try
                 let prop = getProperty column DTO entity
-                prop.DateTimeOffsetValue.Value
+                (box prop) :?> DateTimeOffset
             with exn ->
                 failwithf
                     "Could not get dateTimeOffset value of property %s for entity %s %s. Message: %s"
@@ -179,8 +168,8 @@ type AzureTackleRowEntity(entity: TableEntity) =
 
         member __.dateTimeOffsetOrNone(column: string): DateTimeOffset option =
             try
-                getOptionalProperty column entity
-                |> Option.map (fun prop -> prop.DateTimeOffsetValue.Value)
+                getOptionalProperty column DTO entity
+                |> Option.map (fun prop -> (box prop) :?> DateTimeOffset)
             with exn ->
                 failwithf
                     "Could not get dateTimeOffset value of property %s for entity %s %s. Message: %s"
@@ -192,7 +181,7 @@ type AzureTackleRowEntity(entity: TableEntity) =
         member __.bigInt(column: string): int64 =
             try
                 let prop = getProperty column BIGINT entity
-                prop.Int64Value.Value
+                (box prop) :?> int64
             with exn ->
                 failwithf
                     "Could not get dateTimeOffset value of property %s for entity %s %s. Message: %s"
@@ -203,8 +192,8 @@ type AzureTackleRowEntity(entity: TableEntity) =
 
         member __.bigIntOrNone(column: string): int64 option =
             try
-                getOptionalProperty column entity
-                |> Option.map (fun prop -> prop.Int64Value.Value)
+                getOptionalProperty column BIGINT entity
+                |> Option.map (fun prop -> (box prop) :?> int64)
             with exn ->
                 failwithf
                     "Could not get dateTimeOffset value of property %s for entity %s %s. Message: %s"
@@ -215,8 +204,8 @@ type AzureTackleRowEntity(entity: TableEntity) =
 
         member __.bool(column: string): bool =
             try
-                let prop = getProperty column BIGINT entity
-                prop.BooleanValue.Value
+                let prop = getProperty column BOOL entity
+                (box prop) :?> bool
             with exn ->
                 failwithf
                     "Could not get bool value of property %s for entity %s %s. Message: %s"
@@ -227,8 +216,8 @@ type AzureTackleRowEntity(entity: TableEntity) =
 
         member __.boolOrNone(column: string): bool option =
             try
-                getOptionalProperty column entity
-                |> Option.map (fun prop -> prop.BooleanValue.Value)
+                getOptionalProperty column BOOL entity
+                |> Option.map (fun prop -> (box prop) :?> bool)
             with exn ->
                 failwithf
                     "Could not get bool value of property %s for entity %s %s. Message: %s"
@@ -240,7 +229,7 @@ type AzureTackleRowEntity(entity: TableEntity) =
         member __.binary(column: string): byte array =
             try
                 let prop = getProperty column BINARY entity
-                prop.BinaryValue
+                (box prop) :?> byte array
             with exn ->
                 failwithf
                     "Could not get binary value of property %s for entity %s %s. Message: %s"
@@ -251,8 +240,8 @@ type AzureTackleRowEntity(entity: TableEntity) =
 
         member __.binaryOrNone(column: string): byte array option =
             try
-                getOptionalProperty column entity
-                |> Option.map (fun prop -> prop.BinaryValue)
+                getOptionalProperty column BINARY entity
+                |> Option.map (fun prop -> (box prop) :?> byte array)
             with exn ->
                 failwithf
                     "Could not get binary value of property %s for entity %s %s. Message: %s"
@@ -265,44 +254,10 @@ type AzureTackleSetEntity(partKey, rowKey: string) =
     let entity = TableEntity(partKey, rowKey)
 
     member __.returnEntity = entity
-
-    member __.string (propName: string) (value: string) =
-        entity.Properties.[propName] <- EntityProperty.GeneratePropertyForString value
-
-    member this.stringOrNone (propName: string) (value: string option) =
-        match value with
-        | Some x -> this.string propName x
-        | None -> ()
-
-    member __.int (propName: string) (value: int) =
-        entity.Properties.[propName] <- EntityProperty.GeneratePropertyForInt value
+    member __.add (propName: string) (value: obj) =
+        entity.Add (propName,value)
         ()
-
-    member this.intOrNone (propName: string) (value: int option) =
+    member __.addOptional (propName: string) (value: obj option) =
         match value with
-        | Some x -> this.int propName x
-        | None -> ()
-
-    member __.float (propName: string) (value: float) =
-        entity.Properties.[propName] <- EntityProperty.GeneratePropertyForDouble value
-
-    member this.floatOrNone (propName: string) (value: float option) =
-        match value with
-        | Some x -> this.float propName x
-        | None -> ()
-
-    member __.dateTimeOffset (propName: string) (value: DateTimeOffset) =
-        entity.Properties.[propName] <- EntityProperty.GeneratePropertyForDateTimeOffset value
-
-    member this.dateTimeOffsetOrNone (propName: string) (value: DateTimeOffset option) =
-        match value with
-        | Some x -> this.dateTimeOffset propName x
-        | None -> ()
-
-    member __.bool (propName: string) (value: bool) =
-        entity.Properties.[propName] <- EntityProperty.GeneratePropertyForBool value
-
-    member this.boolOrNone (propName: string) (value: bool option) =
-        match value with
-        | Some x -> this.bool propName x
+        | Some x -> entity.Add (propName,x)
         | None -> ()

@@ -3,7 +3,8 @@ module Tests
 open Expecto
 open System
 open AzureTackle
-open Microsoft.Azure.Cosmos.Table
+open Azure.Data.Tables
+open System.Threading
 
 printfn "Starting Tests"
 
@@ -12,14 +13,14 @@ let TestTable = "TestTable"
 
 type TestData =
     { PartKey: string
-      RowKey: RowKey
+      RowKey: string
       Date: DateTimeOffset
       Exists: bool
       Value: float
       Text: string }
 
 let azureCon =
-    ("UseDevelopmentStorage=true", "UseDevelopmentStorage=true", Prod)
+    ("UseDevelopmentStorage=true", "UseDevelopmentStorage=true", Prod,CancellationToken.None)
     |> AzureTable.connectWithStages
 
 [<Tests>]
@@ -30,7 +31,7 @@ let simpleTest =
 
             let testData =
                 { PartKey = "PartKey"
-                  RowKey = DateTime.UtcNow |> RowKey.toRowKey
+                  RowKey = DateTime.UtcNow |> SortedRowKey.toSortedRowKey
                   Date = DateTime.UtcNow |> DateTimeOffset
                   Value = 0.2
                   Exists = true
@@ -40,18 +41,16 @@ let simpleTest =
                 azureCon
                 |> AzureTable.table TestTable
                 |> AzureTable.insert (testData.PartKey, testData.RowKey) (fun set ->
-                    set.dateTimeOffset "Date" testData.Date
-                    set.float "Value" testData.Value
-                    set.bool "Exists" testData.Exists
-                    set.string "Text" testData.Text
+                    set.add "Date" testData.Date
+                    set.add "Value" testData.Value
+                    set.add "Exists" testData.Exists
+                    set.add "Text" testData.Text
                     set.returnEntity)
 
             let! values =
                 azureCon
                 |> AzureTable.table TestTable
-                |> AzureTable.filter [
-                    RoKey(Equal, testData.RowKey.GetValue)
-                   ]
+                |> AzureTable.filter (RowKey testData.RowKey)
                 |> AzureTable.execute (fun read ->
                     { PartKey = read.partKey
                       RowKey = read.rowKey
@@ -72,11 +71,11 @@ let simpleTest =
           }
           testTask "Insert test data to table and read data from the table directly" {
 
-              let azureCon = "UseDevelopmentStorage=true" |> AzureTable.connect
+              let azureCon = ("UseDevelopmentStorage=true",CancellationToken.None) |> AzureTable.connect
 
               let testData =
                   { PartKey = "PartKey"
-                    RowKey = DateTime.UtcNow |> RowKey.toRowKey
+                    RowKey = DateTime.UtcNow |> SortedRowKey.toSortedRowKey
                     Date = DateTime.UtcNow |> DateTimeOffset
                     Value = 0.2
                     Exists = true
@@ -86,16 +85,16 @@ let simpleTest =
                   azureCon
                   |> AzureTable.table TestTable
                   |> AzureTable.insert (testData.PartKey, testData.RowKey) (fun set ->
-                      set.dateTimeOffset "Date" testData.Date
-                      set.float "Value" testData.Value
-                      set.bool "Exists" testData.Exists
-                      set.string "Text" testData.Text
+                      set.add "Date" testData.Date
+                      set.add "Value" testData.Value
+                      set.add "Exists" testData.Exists
+                      set.add "Text" testData.Text
                       set.returnEntity)
 
               let! values =
                   azureCon
                   |> AzureTable.table TestTable
-                  |> AzureTable.executeDirect (fun read ->
+                  |> AzureTable.execute (fun read ->
                       { PartKey = read.partKey
                         RowKey = read.rowKey
                         Date = read.dateTimeOffset "Date"
@@ -103,12 +102,18 @@ let simpleTest =
                         Value = read.float "Value"
                         Text = read.string "Text" })
 
-              let results = values |> Array.tryHead
+              let results =
+                values
+                |> function
+                    | Ok r -> r |> Array.tryHead
+                    | Error (exn: Exception) ->
+                        printfn "no data exn :%s" exn.Message
+                        failwithf "no data exn :%s" exn.Message
 
               Expect.equal results (Some testData) "Insert test data is the same the readed testdata"
           }
           testTask "Insert test data as batch to table and receive exactly one value from the table" {
-              let rowKey = DateTime.UtcNow |> RowKey.toRowKey
+              let rowKey = DateTime.UtcNow |> SortedRowKey.toSortedRowKey
 
               let testData =
                   { PartKey = "PartKey"
@@ -122,17 +127,17 @@ let simpleTest =
                   azureCon
                   |> AzureTable.table TestTable
                   |> AzureTable.insert (testData.PartKey, testData.RowKey) (fun set ->
-                      set.dateTimeOffset "Date" testData.Date
-                      set.float "Value" testData.Value
-                      set.bool "Exists" testData.Exists
-                      set.string "Text" testData.Text
+                      set.add "Date" testData.Date
+                      set.add "Value" testData.Value
+                      set.add "Exists" testData.Exists
+                      set.add "Text" testData.Text
                       set.returnEntity)
 
 
               let! value =
                   azureCon
                   |> AzureTable.table TestTable
-                  |> AzureTable.filterReceive ("PartKey", rowKey.GetValue)
+                  |> AzureTable.filterReceive ("PartKey", rowKey)
                   |> AzureTable.receive (fun read ->
                       { PartKey = read.partKey
                         RowKey = read.rowKey
@@ -144,7 +149,7 @@ let simpleTest =
               Expect.equal value (Some testData) "Insert test data is the same the readed testdata"
           }
           testTask "Insert test data to table and backup and receive exactly one value from the backup table" {
-              let rowKey = DateTime.UtcNow |> RowKey.toRowKey
+              let rowKey = DateTime.UtcNow |> SortedRowKey.toSortedRowKey
 
               let testData =
                   { PartKey = "PartKey"
@@ -158,17 +163,17 @@ let simpleTest =
                   azureCon
                   |> AzureTable.table TestTable
                   |> AzureTable.insert (testData.PartKey, testData.RowKey) (fun set ->
-                      set.dateTimeOffset "Date" testData.Date
-                      set.float "Value" testData.Value
-                      set.bool "Exists" testData.Exists
-                      set.string "Text" testData.Text
+                      set.add "Date" testData.Date
+                      set.add "Value" testData.Value
+                      set.add "Exists" testData.Exists
+                      set.add "Text" testData.Text
                       set.returnEntity)
 
 
               let! value =
                   azureCon
                   |> AzureTable.table TestTable
-                  |> AzureTable.filterReceive ("PartKey", rowKey.GetValue)
+                  |> AzureTable.filterReceive ("PartKey", rowKey)
                   |> AzureTable.receive (fun read ->
                       { PartKey = read.partKey
                         RowKey = read.rowKey
@@ -183,7 +188,7 @@ let simpleTest =
 
               let testData =
                   { PartKey = "PartKey"
-                    RowKey = DateTime.UtcNow |> RowKey.toRowKey
+                    RowKey = DateTime.UtcNow |> SortedRowKey.toSortedRowKey
                     Date = DateTime.UtcNow |> System.DateTimeOffset
                     Value = 0.2
                     Exists = true
@@ -193,18 +198,16 @@ let simpleTest =
                   azureCon
                   |> AzureTable.table TestTable
                   |> AzureTable.insert (testData.PartKey, testData.RowKey) (fun set ->
-                      set.dateTimeOffset "Date" testData.Date
-                      set.float "Value" testData.Value
-                      set.bool "Exists" testData.Exists
-                      set.string "Text" testData.Text
+                      set.add "Date" testData.Date
+                      set.add "Value" testData.Value
+                      set.add "Exists" testData.Exists
+                      set.add "Text" testData.Text
                       set.returnEntity)
 
               let! timeStamps =
                   azureCon
                   |> AzureTable.table TestTable
-                  |> AzureTable.filter [
-                      RoKey(Equal, testData.RowKey.GetValue)
-                     ]
+                  |> AzureTable.filter (RowKey testData.RowKey)
                   |> AzureTable.execute (fun read -> read.timeStamp)
 
               let data =
@@ -223,7 +226,7 @@ let simpleTest =
 
                 let testData =
                   [| {  PartKey = "PartKey"
-                        RowKey = DateTime.UtcNow |> RowKey.toRowKey
+                        RowKey = DateTime.UtcNow |> SortedRowKey.toSortedRowKey
                         Date = DateTime.UtcNow |> System.DateTimeOffset
                         Value = 0.2
                         Exists = true
@@ -232,18 +235,16 @@ let simpleTest =
                     azureCon
                     |> AzureTable.table TestTable
                     |> AzureTable.insertBatch testData (fun d ->
-                        let set = AzureTackleSetEntity(d.PartKey, d.RowKey.GetValue)
-                        set.dateTimeOffset "Date" d.Date
-                        set.bool "Exists" d.Exists
-                        set.string "Text" d.Text
-                        set.float "Value" d.Value
+                        let set = AzureTackleSetEntity(d.PartKey, d.RowKey)
+                        set.add "Date" d.Date
+                        set.add "Exists" d.Exists
+                        set.add "Text" d.Text
+                        set.add "Value" d.Value
                         set.returnEntity)
                 let! timeStamps =
                     azureCon
                     |> AzureTable.table TestTable
-                    |> AzureTable.filter [
-                        RoKey(Equal, testData.[0].RowKey.GetValue)
-                        ]
+                    |> AzureTable.filter (RowKey testData.[0].RowKey)
                     |> AzureTable.execute (fun read -> read.timeStamp)
 
                 let data =
@@ -275,11 +276,11 @@ let simpleTest =
                     azureCon
                     |> AzureTable.table TestTable
                     |> AzureTable.deleteBatch values (fun d ->
-                        let set = AzureTackleSetEntity(d.PartKey, d.RowKey.GetValue)
-                        set.dateTimeOffset "Date" d.Date
-                        set.bool "Exists" d.Exists
-                        set.string "Text" d.Text
-                        set.float "Value" d.Value
+                        let set = AzureTackleSetEntity(d.PartKey, d.RowKey)
+                        set.add "Date" d.Date
+                        set.add "Exists" d.Exists
+                        set.add "Text" d.Text
+                        set.add "Value" d.Value
                         set.returnEntity)
                 let! values =
                     azureCon

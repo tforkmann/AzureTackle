@@ -1,3 +1,4 @@
 group AzureTackle
   FSharp.Core
   Azure.Data.Tables
+  FSharp.Control.TaskSeq
