@@ -20,16 +20,13 @@ type TestData =
       ValueDecimal  : decimal
       Text: string }
 
-let azureCon =
-    ("UseDevelopmentStorage=true")
-    |> AzureTable.connect
-
 [<Tests>]
 let simpleTest =
     testList
         "AzureTackle"
         [ testTask "Insert test data to table and read data from the table" {
 
+            let! tableProps = AzureTable.withConnectionString("UseDevelopmentStorage=true",TestTable)
             let testData =
                 { PartKey = "PartKey"
                   RowKey = DateTime.UtcNow |> SortedRowKey.toSortedRowKey
@@ -40,8 +37,7 @@ let simpleTest =
                   Text = "isWorking" }
 
             do!
-                azureCon
-                |> AzureTable.table TestTable
+                tableProps
                 |> AzureTable.upsertInline (testData.PartKey, testData.RowKey) (fun set ->
                     set.Add ("Date", testData.Date)
                     set.Add ("Value", testData.Value)
@@ -51,8 +47,7 @@ let simpleTest =
                     set)
 
             let! values =
-                azureCon
-                |> AzureTable.table TestTable
+                tableProps
                 |> AzureTable.filter (RowKey testData.RowKey)
                 |> AzureTable.execute (fun read ->
                     { PartKey = read.partKey
@@ -68,7 +63,7 @@ let simpleTest =
           }
           testTask "Insert test data to table and read data from the table directly" {
 
-              let azureCon = ("UseDevelopmentStorage=true") |> AzureTable.connect
+              let! tableProps = AzureTable.withConnectionString("UseDevelopmentStorage=true",TestTable)
 
               let testData =
                   { PartKey = "PartKey"
@@ -80,8 +75,7 @@ let simpleTest =
                     Text = "isWorking" }
 
               do!
-                  azureCon
-                  |> AzureTable.table TestTable
+                  tableProps
                   |> AzureTable.upsertInline (testData.PartKey, testData.RowKey) (fun set ->
                       set.Add ("Date", testData.Date)
                       set.Add ("Value", testData.Value)
@@ -91,8 +85,7 @@ let simpleTest =
                       set)
 
               let! values =
-                  azureCon
-                  |> AzureTable.table TestTable
+                  tableProps
                   |> AzureTable.execute (fun read ->
                       { PartKey = read.partKey
                         RowKey = read.rowKey
@@ -108,6 +101,7 @@ let simpleTest =
           }
           testTask "Insert test data as batch to table and receive exactly one value from the table" {
               let rowKey = DateTime.UtcNow |> SortedRowKey.toSortedRowKey
+              let! tableProps = AzureTable.withConnectionString("UseDevelopmentStorage=true",TestTable)
 
               let testData =
                   { PartKey = "PartKey"
@@ -119,8 +113,7 @@ let simpleTest =
                     Text = "isWorking" }
 
               do!
-                  azureCon
-                  |> AzureTable.table TestTable
+                  tableProps
                   |> AzureTable.upsertInline (testData.PartKey, testData.RowKey) (fun set ->
                       set.Add ("Date", testData.Date)
                       set.Add ("Value", testData.Value)
@@ -131,8 +124,7 @@ let simpleTest =
 
 
               let! value =
-                  azureCon
-                  |> AzureTable.table TestTable
+                 tableProps
                   |> AzureTable.filterReceive ("PartKey", rowKey)
                   |> AzureTable.receive (fun read ->
                       { PartKey = read.partKey
@@ -146,6 +138,7 @@ let simpleTest =
               Expect.equal value (Some testData) "Insert test data is the same the readed testdata"
           }
           testTask "Insert test data to table and backup and receive exactly one value from the backup table" {
+              let! tableProps = AzureTable.withConnectionString("UseDevelopmentStorage=true",TestTable)
               let rowKey = DateTime.UtcNow |> SortedRowKey.toSortedRowKey
 
               let testData =
@@ -165,16 +158,12 @@ let simpleTest =
                     .Append("Exists", testData.Exists)
                     .Append("Text", testData.Text)
 
-
-
               do!
-                  azureCon
-                  |> AzureTable.table TestTable
+                  tableProps
                   |> AzureTable.upsert entity
 
               let! value =
-                  azureCon
-                  |> AzureTable.table TestTable
+                  tableProps
                   |> AzureTable.filterReceive ("PartKey", rowKey)
                   |> AzureTable.receive (fun read ->
                       { PartKey = read.partKey
@@ -188,6 +177,7 @@ let simpleTest =
               Expect.equal value (Some testData) "Insert test data is the same the readed testdata"
           }
           testTask "Insert test data to table and read timestamp from the table" {
+              let! tableProps = AzureTable.withConnectionString("UseDevelopmentStorage=true",TestTable)
 
               let testData =
                   { PartKey = "PartKey"
@@ -199,8 +189,7 @@ let simpleTest =
                     Text = "isWorking" }
 
               do!
-                  azureCon
-                  |> AzureTable.table TestTable
+                  tableProps
                   |> AzureTable.upsertInline (testData.PartKey, testData.RowKey) (fun set ->
                       set.Add ("Date", testData.Date)
                       set.Add ("Value", testData.Value)
@@ -210,8 +199,7 @@ let simpleTest =
                       set)
 
               let! timeStamps =
-                  azureCon
-                  |> AzureTable.table TestTable
+                  tableProps
                   |> AzureTable.filter (RowKey testData.RowKey)
                   |> AzureTable.execute (fun read -> read.timeStamp)
 
@@ -239,14 +227,13 @@ let simpleTest =
                             .Append("Text", d.Text)
                             .Append("Value", d.Value)
                             .Append("ValueDecimal", d.ValueDecimal))
+                let! tableProps = AzureTable.withConnectionString("UseDevelopmentStorage=true",TestTable)
                 do!
-                    azureCon
-                    |> AzureTable.table TestTable
+                    tableProps
                     |> AzureTable.upsertBatch entities
 
                 let! timeStamps =
-                    azureCon
-                    |> AzureTable.table TestTable
+                    tableProps
                     |> AzureTable.filter (RowKey testData.[0].RowKey)
                     |> AzureTable.execute (fun read -> read.timeStamp)
 
@@ -255,10 +242,9 @@ let simpleTest =
                 Expect.isTrue data "Timestamp isn't there"
           }
           testTask "Delete test data as batch" {
-
+                let! tableProps = AzureTable.withConnectionString("UseDevelopmentStorage=true",TestTable)
                 let! values =
-                  azureCon
-                  |> AzureTable.table TestTable
+                  tableProps
                   |> AzureTable.executeDirect (fun read ->
                       { PartKey = read.partKey
                         RowKey = read.rowKey
@@ -269,8 +255,7 @@ let simpleTest =
                         Text = read.string "Text" })
 
                 do!
-                    azureCon
-                    |> AzureTable.table TestTable
+                    tableProps
                     |> AzureTable.deleteBatch values (fun d ->
                         let set = TableEntity(d.PartKey, d.RowKey)
                         set.Add ("Date", d.Date)
@@ -280,8 +265,7 @@ let simpleTest =
                         set.Add ("ValueDecimal", d.ValueDecimal)
                         set)
                 let! values =
-                    azureCon
-                    |> AzureTable.table TestTable
+                    tableProps
                     |> AzureTable.executeDirect (fun read ->
                         {   PartKey = read.partKey
                             RowKey = read.rowKey
