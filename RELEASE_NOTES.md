@@ -1,4 +1,4 @@
-#### 2.0.0-alpha003 - 2024-06-02
+#### 2.0.0-alpha004 - 2024-06-03
 * Add connectWithTableServiceClient
 #### 2.0.0-alpha002 - 2024-06-02
 * Migrating to Azure.Data.Tables SDK
