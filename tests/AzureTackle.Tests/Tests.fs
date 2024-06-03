@@ -92,6 +92,7 @@ let simpleTest =
                   |> AzureTable.insert (testData.PartKey, testData.RowKey) (fun set ->
                       set.add "Date" testData.Date
                       set.add "Value" testData.Value
+                      set.add "ValueDecimal" testData.ValueDecimal
                       set.add "Exists" testData.Exists
                       set.add "Text" testData.Text
                       set.returnEntity)
@@ -175,6 +176,7 @@ let simpleTest =
                   |> AzureTable.insert (testData.PartKey, testData.RowKey) (fun set ->
                       set.add "Date" testData.Date
                       set.add "Value" testData.Value
+                      set.add "ValueDecimal" testData.ValueDecimal
                       set.add "Exists" testData.Exists
                       set.add "Text" testData.Text
                       set.returnEntity)
@@ -212,6 +214,7 @@ let simpleTest =
                   |> AzureTable.insert (testData.PartKey, testData.RowKey) (fun set ->
                       set.add "Date" testData.Date
                       set.add "Value" testData.Value
+                      set.add "ValueDecimal" testData.ValueDecimal
                       set.add "Exists" testData.Exists
                       set.add "Text" testData.Text
                       set.returnEntity)
@@ -253,6 +256,7 @@ let simpleTest =
                         set.add "Exists" d.Exists
                         set.add "Text" d.Text
                         set.add "Value" d.Value
+                        set.add "ValueDecimal" d.ValueDecimal
                         set.returnEntity)
                 let! timeStamps =
                     azureCon
@@ -295,6 +299,7 @@ let simpleTest =
                         set.add "Exists" d.Exists
                         set.add "Text" d.Text
                         set.add "Value" d.Value
+                        set.add "ValueDecimal" d.ValueDecimal
                         set.returnEntity)
                 let! values =
                     azureCon

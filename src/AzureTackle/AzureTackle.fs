@@ -319,16 +319,16 @@ module AzureTable =
         let connection =
             AzureConnection connectionStringProd
 
-        let connectionBackUp =
+        let connectionDev =
             AzureConnection connectionStringDev
 
         let initAzConfig =
             { defaultAzConfig () with
                 AzureAccount = Some(connection.Connect()) }
 
-        let initAzConfigBackup =
+        let initAzConfigDev =
             { defaultAzConfig () with
-                AzureAccount = Some(connectionBackUp.Connect()) }
+                AzureAccount = Some(connectionDev.Connect()) }
 
         { defaultProps (token) with
             StorageOption =

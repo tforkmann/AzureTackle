@@ -109,7 +109,7 @@ type AzureTackleRowEntity(entity: TableEntity) =
         member __.decimal(column: string): decimal =
             try
                 let prop = getProperty column FLT entity
-                prop.DoubleValue.Value |> decimal
+                (box prop) :?> decimal
             with exn ->
                 failwithf
                     "Could not get float value of property %s for entity %s %s. Message: %s"
@@ -120,8 +120,8 @@ type AzureTackleRowEntity(entity: TableEntity) =
 
         member __.decimalOrNone(column: string): decimal option =
             try
-                getOptionalProperty column entity
-                |> Option.map (fun prop -> prop.DoubleValue.Value |> decimal)
+                getOptionalProperty column FLT entity
+                |> Option.map (fun prop -> (box prop) :?> decimal)
             with exn ->
                 failwithf
                     "Could not get float value of property %s for entity %s %s. Message: %s"
