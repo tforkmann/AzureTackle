@@ -227,19 +227,14 @@ module Table =
 
             while not finished do
                 try
-                    client.CreateTableIfNotExistsAsync(tableName)
-                    |> Async.AwaitTask
-                    |> Async.RunSynchronously
-                    |> ignore
-
+                    let! _ =
+                        client.CreateTableIfNotExistsAsync(tableName)
                     finished <- true
                 with _ ->
                     Threading.Thread.Sleep 5000
 
             return table
         }
-        |> Async.AwaitTask
-        |> Async.RunSynchronously
 
     let receiveValue (partKey, rowKey) (table: TableClient) =
         task {
@@ -315,27 +310,38 @@ module AzureTable =
             AzureTableConfig = Some initAzConfig }
 
     let table tableName (props: TableProps) =
-        try
-            let newAzureTableConfig =
-                match props.AzureTableConfig with
-                | Some azureTableConfig ->
-                    match azureTableConfig.AzureAccount with
-                    | Some azureAccount ->
-                        {  azureTableConfig with
-                            AzureTable =  Some(getAndCreateTable tableName azureAccount)
-                            TableName = Some tableName }
+        task{
+            try
+                let! newAzureTableConfig =
+                    match props.AzureTableConfig with
+                    | Some azureTableConfig ->
+                        match azureTableConfig.AzureAccount with
+                        | Some azureAccount ->
+                            task{
+                                let! azureTable = getTableClient tableName azureAccount
+                                return
+                                    {  azureTableConfig with
+                                        AzureTable = Some azureTable
+                                        TableName = Some tableName }
+                            }
+                        | None ->
+                            task{
+                                printfn "please use connect to initialize the Azure connection"
+                                return failwith "please use connect to initialize the Azure connection"
+                            }
+
                     | None ->
-                        printfn "please use connect to initialize the Azure connection"
-                        failwith "please use connect to initialize the Azure connection"
+                        task{
+                            printfn "please use connect to initialize the Azure connection"
+                            return failwith "please use connect to initialize the Azure connection"
+                        }
 
-                | None ->
-                    printfn "please use connect to initialize the Azure connection"
-                    failwith "please use connect to initialize the Azure connection"
-
-            { props with
-                AzureTableConfig = Some newAzureTableConfig }
-        with exn ->
-            failwithf "Could not get a table %s" exn.Message
+                return
+                    { props with
+                        AzureTableConfig = Some newAzureTableConfig }
+            with exn ->
+                return failwithf "Could not get a table %s" exn.Message
+        }
 
     let filter (filter: AzureFilter) (props: TableProps) =
 

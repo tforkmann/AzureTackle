@@ -8,10 +8,7 @@
         <Compile Include="SharedView.fs" />
         <Compile Include="Pages\Install.fs" />
         <Compile Include="Pages\Use.fs" />
-        <Compile Include="Pages\LineChart.fs" />
-        <Compile Include="Pages\BarChart.fs" />
-        <Compile Include="Pages\DoughnutChart.fs" />
-        <Compile Include="Pages\MixedChart.fs" />
+        <Compile Include="Pages\AzureTackle.fs" />
         <Compile Include="View.fs" />
         <Compile Include="App.fs" />
         <Content Include="index.html" />

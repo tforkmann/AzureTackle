@@ -1,3 +1,4 @@
+group Docs
 Fable.Elmish.HMR
 Feliz.Router
 Zanaptak.TypedCssClasses
@@ -6,4 +7,3 @@ Fable.Elmish.Debugger
 Feliz.Bulma
 Feliz.DaisyUI
 Feliz.UseElmish
-Feliz.ChartJS
