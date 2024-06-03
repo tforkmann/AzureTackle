@@ -335,7 +335,7 @@ module AzureTable =
                 Some
                     { Stage = Some stage
                       ProdStorage = initAzConfig
-                      DevStorage = Some initAzConfigBackup } }
+                      DevStorage = Some initAzConfigDev } }
 
     let table tableName (props: TableProps) =
         try

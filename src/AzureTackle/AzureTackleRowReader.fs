@@ -106,6 +106,30 @@ type AzureTackleRowEntity(entity: TableEntity) =
                     entity.RowKey
                     exn.Message
 
+        member __.decimal(column: string): decimal =
+            try
+                let prop = getProperty column FLT entity
+                prop.DoubleValue.Value |> decimal
+            with exn ->
+                failwithf
+                    "Could not get float value of property %s for entity %s %s. Message: %s"
+                    column
+                    entity.PartitionKey
+                    entity.RowKey
+                    exn.Message
+
+        member __.decimalOrNone(column: string): decimal option =
+            try
+                getOptionalProperty column entity
+                |> Option.map (fun prop -> prop.DoubleValue.Value |> decimal)
+            with exn ->
+                failwithf
+                    "Could not get float value of property %s for entity %s %s. Message: %s"
+                    column
+                    entity.PartitionKey
+                    entity.RowKey
+                    exn.Message
+
         member __.string(column: string): string =
             try
                 let prop = getProperty column TXT entity

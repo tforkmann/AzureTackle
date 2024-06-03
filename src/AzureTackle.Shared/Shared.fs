@@ -7,6 +7,10 @@ module Shared =
     type Stage =
         | Dev
         | Prod
+        member this.Value =
+            match this with
+            | Dev -> "dev"
+            | Prod -> "prod"
 
     module SortedRowKey =
         let toSortedRowKey (dateTime: DateTime) =

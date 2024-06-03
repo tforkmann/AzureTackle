@@ -17,6 +17,7 @@ type TestData =
       Date: DateTimeOffset
       Exists: bool
       Value: float
+      ValueDecimal  : decimal
       Text: string }
 
 let azureCon =
@@ -35,6 +36,7 @@ let simpleTest =
                   Date = DateTime.UtcNow |> DateTimeOffset
                   Value = 0.2
                   Exists = true
+                  ValueDecimal = 0.2m
                   Text = "isWorking" }
 
             do!
@@ -43,6 +45,7 @@ let simpleTest =
                 |> AzureTable.insert (testData.PartKey, testData.RowKey) (fun set ->
                     set.add "Date" testData.Date
                     set.add "Value" testData.Value
+                    set.add "ValueDecimal" testData.ValueDecimal
                     set.add "Exists" testData.Exists
                     set.add "Text" testData.Text
                     set.returnEntity)
@@ -57,6 +60,7 @@ let simpleTest =
                       Date = read.dateTimeOffset "Date"
                       Exists = read.bool "Exists"
                       Value = read.float "Value"
+                      ValueDecimal = read.decimal "ValueDecimal"
                       Text = read.string "Text" })
 
             let data =
@@ -78,6 +82,7 @@ let simpleTest =
                     RowKey = DateTime.UtcNow |> SortedRowKey.toSortedRowKey
                     Date = DateTime.UtcNow |> DateTimeOffset
                     Value = 0.2
+                    ValueDecimal = 0.2m
                     Exists = true
                     Text = "isWorking" }
 
@@ -100,6 +105,7 @@ let simpleTest =
                         Date = read.dateTimeOffset "Date"
                         Exists = read.bool "Exists"
                         Value = read.float "Value"
+                        ValueDecimal = read.decimal "ValueDecimal"
                         Text = read.string "Text" })
 
               let results =
@@ -120,6 +126,7 @@ let simpleTest =
                     RowKey = rowKey
                     Date = DateTime.UtcNow |> System.DateTimeOffset
                     Value = 0.2
+                    ValueDecimal = 0.2m
                     Exists = true
                     Text = "isWorking" }
 
@@ -129,6 +136,7 @@ let simpleTest =
                   |> AzureTable.insert (testData.PartKey, testData.RowKey) (fun set ->
                       set.add "Date" testData.Date
                       set.add "Value" testData.Value
+                      set.add "ValueDecimal" testData.ValueDecimal
                       set.add "Exists" testData.Exists
                       set.add "Text" testData.Text
                       set.returnEntity)
@@ -144,6 +152,7 @@ let simpleTest =
                         Date = read.dateTimeOffset "Date"
                         Exists = read.bool "Exists"
                         Value = read.float "Value"
+                        ValueDecimal = read.decimal "ValueDecimal"
                         Text = read.string "Text" })
 
               Expect.equal value (Some testData) "Insert test data is the same the readed testdata"
@@ -156,6 +165,7 @@ let simpleTest =
                     RowKey = rowKey
                     Date = DateTime.UtcNow |> System.DateTimeOffset
                     Value = 0.2
+                    ValueDecimal = 0.2m
                     Exists = true
                     Text = "isWorking" }
 
@@ -180,6 +190,7 @@ let simpleTest =
                         Date = read.dateTimeOffset "Date"
                         Exists = read.bool "Exists"
                         Value = read.float "Value"
+                        ValueDecimal = read.decimal "ValueDecimal"
                         Text = read.string "Text" })
 
               Expect.equal value (Some testData) "Insert test data is the same the readed testdata"
@@ -191,6 +202,7 @@ let simpleTest =
                     RowKey = DateTime.UtcNow |> SortedRowKey.toSortedRowKey
                     Date = DateTime.UtcNow |> System.DateTimeOffset
                     Value = 0.2
+                    ValueDecimal = 0.2m
                     Exists = true
                     Text = "isWorking" }
 
@@ -229,6 +241,7 @@ let simpleTest =
                         RowKey = DateTime.UtcNow |> SortedRowKey.toSortedRowKey
                         Date = DateTime.UtcNow |> System.DateTimeOffset
                         Value = 0.2
+                        ValueDecimal = 0.2m
                         Exists = true
                         Text = "isWorking" }|]
                 do!
@@ -270,6 +283,7 @@ let simpleTest =
                         Date = read.dateTimeOffset "Date"
                         Exists = read.bool "Exists"
                         Value = read.float "Value"
+                        ValueDecimal = read.decimal "ValueDecimal"
                         Text = read.string "Text" })
 
                 do!
@@ -291,6 +305,7 @@ let simpleTest =
                             Date = read.dateTimeOffset "Date"
                             Exists = read.bool "Exists"
                             Value = read.float "Value"
+                            ValueDecimal = read.decimal "ValueDecimal"
                             Text = read.string "Text" })
                 Expect.isEmpty values "Values should be empty"
           }   ]
