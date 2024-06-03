@@ -337,6 +337,19 @@ module AzureTable =
                       ProdStorage = initAzConfig
                       DevStorage = Some initAzConfigDev } }
 
+    let connectWithTableServiceClient (tableServiceClient: TableServiceClient, token) =
+        let connection =
+            UseTableServiceClient tableServiceClient
+        let initAzConfig =
+            { defaultAzConfig () with
+                AzureAccount = Some(connection.Connect()) }
+
+        { defaultProps (token) with
+            StorageOption = Some
+                {   Stage = None
+                    ProdStorage = initAzConfig
+                    DevStorage = None } }
+
     let table tableName (props: TableProps) =
         try
             let newStorageOption =
