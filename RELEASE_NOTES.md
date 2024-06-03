@@ -1,3 +1,5 @@
+#### 2.0.1 - 2024-06-03
+* Working version with Azure.Data.Tables SDK
 #### 2.0.0-alpha004 - 2024-06-03
 * Add connectWithTableServiceClient
 #### 2.0.0-alpha002 - 2024-06-02
