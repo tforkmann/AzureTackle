@@ -1,3 +1,5 @@
+#### 2.0.0-alpha002 - 2024-06-02
+* Migrating to Azure.Data.Tables SDK
 #### 1.0.3 - 2024-06-01
 * Add decimal
 #### 1.0.2 - 2024-05-28
