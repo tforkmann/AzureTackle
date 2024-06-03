@@ -4,10 +4,6 @@ namespace AzureTackle
 module Shared =
     open System
 
-    type RowKey =
-        | RowKey of string
-        member this.GetValue = (fun (RowKey id) -> id) this
-
     type Stage =
         | Dev
         | Prod
@@ -16,10 +12,9 @@ module Shared =
             | Dev -> "dev"
             | Prod -> "prod"
 
-    module RowKey =
-        let toRowKey (dateTime: DateTime) =
+    module SortedRowKey =
+        let toSortedRowKey (dateTime: DateTime) =
             String.Format("{0:D19}", DateTime.MaxValue.Ticks - dateTime.Ticks)
-            |> RowKey
 
-        let toDate (RowKey ticks) =
+        let toDate (ticks) =
             DateTime(DateTime.MaxValue.Ticks - int64 ticks)

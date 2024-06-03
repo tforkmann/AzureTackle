@@ -15,13 +15,15 @@ group AzureTackle
   source https://api.nuget.org/v3/index.json
   framework: net8.0
   nuget FSharp.Core
-  nuget Microsoft.Azure.Cosmos.Table
+  nuget Azure.Data.Tables
+  nuget FSharp.Control.TaskSeq
+
 group Test
   storage: none
   source https://api.nuget.org/v3/index.json
   framework: net8.0
   nuget Expecto
-  nuget Microsoft.Azure.Cosmos.Table
+  nuget Azure.Data.Tables
   nuget Microsoft.Extensions.Configuration.Json
 
 group Docs

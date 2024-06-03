@@ -5,7 +5,6 @@
     </PropertyGroup>
     <ItemGroup>
         <Compile Include="Helpers.fs" />
-        <Compile Include="TableReflection.fs" />
         <Compile Include="AzureTackleRowReader.fs" />
         <Compile Include="AzureTackle.fs" />
     </ItemGroup>
