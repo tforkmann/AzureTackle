@@ -198,20 +198,20 @@ module Table =
         System.Collections.Concurrent.ConcurrentDictionary<string, TableClient>()
 
     let getTableClient (tableName) (azConnection: AzureAccount) =
-        task {
-            match tablesCreated.TryGetValue tableName with
-            | true, tableClient -> return tableClient
-            | _ ->
-                let tableClient =
-                    azConnection.TableServiceClient.GetTableClient(tableName)
+        match tablesCreated.TryGetValue tableName with
+        | true, tableClient -> tableClient
+        | _ ->
+            let tableClient =
+                azConnection.TableServiceClient.GetTableClient(tableName)
 
-                let! _ = tableClient.CreateIfNotExistsAsync()
+            tableClient.CreateIfNotExists() |> ignore
 
-                tablesCreated.TryAdd(tableName, tableClient)
-                |> ignore
+            tablesCreated.TryAdd(tableName, tableClient)
+            |> ignore
 
-                return tableClient
-        }
+
+            tableClient
+
 
     let getAndCreateTable tableName (azConnection: AzureAccount) =
         task {
@@ -232,7 +232,7 @@ module Table =
 
             while not finished do
                 try
-                    let! _ = client.CreateTableIfNotExistsAsync(tableName)
+                    client.CreateTableIfNotExists(tableName) |> ignore
                     finished <- true
                 with _ ->
                     Threading.Thread.Sleep 5000
@@ -292,39 +292,37 @@ module AzureTable =
           AzureTableConfig = None }
 
     let private table tableName (props: TableProps) =
-        task {
-            try
-                let! newAzureTableConfig =
-                    match props.AzureTableConfig with
-                    | Some azureTableConfig ->
-                        match azureTableConfig.AzureAccount with
-                        | Some azureAccount ->
-                            task {
-                                let! azureTable = getTableClient tableName azureAccount
+        try
+            let newAzureTableConfig =
+                match props.AzureTableConfig with
+                | Some azureTableConfig ->
+                    match azureTableConfig.AzureAccount with
+                    | Some azureAccount ->
 
-                                return
-                                    { azureTableConfig with
-                                        AzureTable = Some azureTable
-                                        TableName = Some tableName }
-                            }
-                        | None ->
-                            task {
-                                printfn "please use connect to initialize the Azure connection"
-                                return failwith "please use connect to initialize the Azure connection"
-                            }
+                        let azureTable =
+                            getTableClient tableName azureAccount
+
+                        { azureTableConfig with
+                            AzureTable = Some azureTable
+                            TableName = Some tableName }
 
                     | None ->
-                        task {
-                            printfn "please use connect to initialize the Azure connection"
-                            return failwith "please use connect to initialize the Azure connection"
-                        }
 
-                return
-                    { props with
-                        AzureTableConfig = Some newAzureTableConfig }
-            with exn ->
-                return failwithf "Could not get a table %s" exn.Message
-        }
+                        printfn "please use connect to initialize the Azure connection"
+                        failwith "please use connect to initialize the Azure connection"
+
+
+                | None ->
+                    printfn "please use connect to initialize the Azure connection"
+                    failwith "please use connect to initialize the Azure connection"
+
+
+
+            { props with
+                AzureTableConfig = Some newAzureTableConfig }
+        with exn ->
+            failwithf "Could not get a table %s" exn.Message
+
 
     let withTableClient (tableServiceClient: TableServiceClient, tableName: string) =
         let connection =
