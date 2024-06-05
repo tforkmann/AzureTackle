@@ -145,8 +145,6 @@ let private inLayout state dispatch (title: string) (docLink: string) (p: Page) 
         ]
     ]
 
-
-
 [<ReactComponent>]
 let AppView (state: State) (dispatch: Msg -> unit) =
 
