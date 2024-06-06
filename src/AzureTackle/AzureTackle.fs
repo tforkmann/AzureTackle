@@ -38,6 +38,7 @@ module Filter =
         | Column of string * ColumnComparison
         | Binary of AzureFilter * BinaryOperation * AzureFilter
         | Unary of UnaryOperation * AzureFilter
+
         static member (+)(a, b) = Binary(a, And, b)
         static member (*)(a, b) = Binary(a, Or, b)
         static member (!!) a = Unary(Not, a)
@@ -74,8 +75,7 @@ module Filter =
 
 
     module private StringValue =
-        let private formatProvider =
-            CultureInfo.InvariantCulture
+        let private formatProvider = CultureInfo.InvariantCulture
 
         let forBinary (value: byte[]) =
             let sb = StringBuilder()
@@ -88,8 +88,7 @@ module Filter =
         let forBool (value: bool) = if value then "true" else "false"
 
         let forDateTimeOffset (value: DateTimeOffset) =
-            let v =
-                value.UtcDateTime.ToString("o", formatProvider)
+            let v = value.UtcDateTime.ToString("o", formatProvider)
 
             sprintf "datetime'%s'" v
 
@@ -103,12 +102,10 @@ module Filter =
         let forInt (value: int) = Convert.ToString(value, formatProvider)
 
         let forLong (value: int64) =
-            Convert.ToString(value, formatProvider)
-            |> sprintf "%sL"
+            Convert.ToString(value, formatProvider) |> sprintf "%sL"
 
         let forAny (v: obj) =
-            Convert.ToString(v, formatProvider)
-            |> sprintf "'%s'"
+            Convert.ToString(v, formatProvider) |> sprintf "'%s'"
 
     let private getColumnComparison field comp =
         let stringValue =
@@ -164,36 +161,23 @@ module Filter =
     let LessThanOrEqual name (o: obj) = column name (LessThanOrEqual o)
 
 module Table =
-    type AzureAccount =
-        { TableServiceClient: TableServiceClient }
+    type AzureAccount = {
+        TableServiceClient: TableServiceClient
+    }
 
     type AzureConnection =
         | AzureConnection of string
         | UseTableServiceClient of TableServiceClient
+
         member this.Connect() =
             match this with
-            | AzureConnection connectionString -> { TableServiceClient = TableServiceClient(connectionString) }
-            | UseTableServiceClient tableServiceClient -> { TableServiceClient = tableServiceClient }
+            | AzureConnection connectionString -> {
+                TableServiceClient = TableServiceClient(connectionString)
+              }
+            | UseTableServiceClient tableServiceClient -> {
+                TableServiceClient = tableServiceClient
+              }
 
-
-    // let getTable tableName (azConnection: AzureAccount) =
-    //     task {
-    //         let client = azConnection.TableServiceClient
-
-    //         let table =
-    //             try
-    //                 client.GetTableReference tableName
-    //             with
-    //             | exn ->
-    //                 let msg =
-    //                     sprintf "Could not get TableReference %s" exn.Message
-
-    //                 failwith msg
-
-    //         return table
-    //     }
-    //     |> Async.AwaitTask
-    //     |> Async.RunSynchronously
     let tablesCreated =
         System.Collections.Concurrent.ConcurrentDictionary<string, TableClient>()
 
@@ -201,13 +185,11 @@ module Table =
         match tablesCreated.TryGetValue tableName with
         | true, tableClient -> tableClient
         | _ ->
-            let tableClient =
-                azConnection.TableServiceClient.GetTableClient(tableName)
+            let tableClient = azConnection.TableServiceClient.GetTableClient(tableName)
 
             tableClient.CreateIfNotExists() |> ignore
 
-            tablesCreated.TryAdd(tableName, tableClient)
-            |> ignore
+            tablesCreated.TryAdd(tableName, tableClient) |> ignore
 
 
             tableClient
@@ -222,8 +204,7 @@ module Table =
                     client.GetTableClient(tableName)
                 with exn ->
 
-                    let msg =
-                        sprintf "Could not get TableReference %s" exn.Message
+                    let msg = sprintf "Could not get TableReference %s" exn.Message
 
                     printfn "Could not get TableReference %s" exn.Message
                     failwith msg
@@ -245,18 +226,34 @@ module Table =
             let! response = table.GetEntityAsync(partKey, rowKey)
             let result = response.Value
 
-            if isNull result then
-                return None
-            else
-                return Some result
+            if isNull result then return None else return Some result
         }
 
-    let query (filter: string option) (table: TableClient) : Task<Azure.Pageable<'a>> =
+    let query
+        (filter: string option)
+        (table: TableClient)
+        (cancellationToken: CancellationToken option)
+        (maxElements: int option)
+        : Task<Azure.Pageable<'a>> =
         task {
 
             match filter with
-            | Some f -> return table.Query<'a>(f, Nullable(1500), [||], CancellationToken.None)
-            | None -> return table.Query<'a>("", Nullable(1500), [||], CancellationToken.None)
+            | Some f ->
+                return
+                    table.Query<'a>(
+                        f,
+                        Nullable(maxElements |> Option.defaultValue 1000),
+                        [||],
+                        cancellationToken |> Option.defaultValue CancellationToken.None
+                    )
+            | None ->
+                return
+                    table.Query<'a>(
+                        "",
+                        Nullable(maxElements |> Option.defaultValue 1000),
+                        [||],
+                        cancellationToken |> Option.defaultValue CancellationToken.None
+                    )
         }
 
     let queryAsync<'a> (filter: string option) (table: TableClient) =
@@ -271,25 +268,33 @@ module Table =
 module AzureTable =
     open Table
 
-    type AzureTableConfig =
-        { AzureTable: TableClient option
-          TableName: string option
-          AzureAccount: AzureAccount option }
+    type AzureTableConfig = {
+        AzureTable: TableClient option
+        TableName: string option
+        AzureAccount: AzureAccount option
+    }
 
-    type TableProps =
-        { Filter: AzureFilter option
-          FilterReceive: (string * string) option
-          AzureTableConfig: AzureTableConfig option }
+    type TableProps = {
+        Filter: AzureFilter option
+        FilterReceive: (string * string) option
+        CancellationToken: CancellationToken option
+        MaxElements: int option
+        AzureTableConfig: AzureTableConfig option
+    }
 
-    let private defaultAzConfig () =
-        { AzureTable = None
-          TableName = None
-          AzureAccount = None }
+    let private defaultAzConfig () = {
+        AzureTable = None
+        TableName = None
+        AzureAccount = None
+    }
 
-    let private defaultProps () =
-        { Filter = None
-          FilterReceive = None
-          AzureTableConfig = None }
+    let private defaultProps () = {
+        Filter = None
+        FilterReceive = None
+        MaxElements = None
+        CancellationToken = None
+        AzureTableConfig = None
+    }
 
     let private table tableName (props: TableProps) =
         try
@@ -299,12 +304,13 @@ module AzureTable =
                     match azureTableConfig.AzureAccount with
                     | Some azureAccount ->
 
-                        let azureTable =
-                            getTableClient tableName azureAccount
+                        let azureTable = getTableClient tableName azureAccount
 
-                        { azureTableConfig with
-                            AzureTable = Some azureTable
-                            TableName = Some tableName }
+                        {
+                            azureTableConfig with
+                                AzureTable = Some azureTable
+                                TableName = Some tableName
+                        }
 
                     | None ->
 
@@ -318,47 +324,60 @@ module AzureTable =
 
 
 
-            { props with
-                AzureTableConfig = Some newAzureTableConfig }
+            {
+                props with
+                    AzureTableConfig = Some newAzureTableConfig
+            }
         with exn ->
             failwithf "Could not get a table %s" exn.Message
 
 
     let withTableClient (tableServiceClient: TableServiceClient, tableName: string) =
-        let connection =
-            UseTableServiceClient tableServiceClient
+        let connection = UseTableServiceClient tableServiceClient
 
-        let initAzConfig =
-            { defaultAzConfig () with
-                AzureAccount = Some(connection.Connect()) }
+        let initAzConfig = {
+            defaultAzConfig () with
+                AzureAccount = Some(connection.Connect())
+        }
 
-        let props =
-            { defaultProps () with
-                AzureTableConfig = Some initAzConfig }
+        let props = {
+            defaultProps () with
+                AzureTableConfig = Some initAzConfig
+        }
 
         table tableName props
 
     let withConnectionString (connectionString: string, tableName: string) =
-        let connection =
-            AzureConnection connectionString
+        let connection = AzureConnection connectionString
 
-        let initAzConfig =
-            { defaultAzConfig () with
-                AzureAccount = Some(connection.Connect()) }
+        let initAzConfig = {
+            defaultAzConfig () with
+                AzureAccount = Some(connection.Connect())
+        }
 
-        let props =
-            { defaultProps () with
-                AzureTableConfig = Some initAzConfig }
+        let props = {
+            defaultProps () with
+                AzureTableConfig = Some initAzConfig
+        }
 
         table tableName props
 
     let filter (filter: AzureFilter) (props: TableProps) = { props with Filter = Some filter }
 
-    let filterReceive (partKey, rowKey) (props: TableProps) =
-        { props with
-            FilterReceive = Some(partKey, rowKey) }
+    let filterReceive (partKey, rowKey) (props: TableProps) = {
+        props with
+            FilterReceive = Some(partKey, rowKey)
+    }
 
+    let withCancellationToken (cancellationToken: CancellationToken) (props: TableProps) = {
+        props with
+            CancellationToken = Some cancellationToken
+    }
 
+    let withMaxElements (maxElements: int) (props: TableProps) = {
+        props with
+            MaxElements = Some maxElements
+    }
 
     let getTable props =
         let azureTableConfig =
@@ -389,10 +408,7 @@ module AzureTable =
 
             let! result = receiveValue keys azureTable
 
-            return
-                result
-                |> Option.map AzureTackleRowEntity
-                |> Option.map read
+            return result |> Option.map AzureTackleRowEntity |> Option.map read
         }
 
     let execute (read: AzureTackleRowEntity -> 't) (props: TableProps) =
@@ -405,13 +421,32 @@ module AzureTable =
                     | Some filters -> filters |> toQuery
                     | None -> None
 
-                let! results = query applyFilter azureTable
+                let! results = query applyFilter azureTable props.CancellationToken props.MaxElements
                 let results = results |> Seq.toList
 
-                return
-                    [| for result in results ->
-                           let e = AzureTackleRowEntity(result)
-                           read e |]
+                return [|
+                    for result in results ->
+                        let e = AzureTackleRowEntity(result)
+                        read e
+                |]
+            with exn ->
+                return failwithf "Execute failed with exn: %s" exn.Message
+        }
+
+    let executeWithMapper mapper (props: TableProps) =
+        task {
+            try
+                let azureTable = getTable props
+
+                let applyFilter =
+                    match props.Filter with
+                    | Some filters -> filters |> toQuery
+                    | None -> None
+
+                let! results = query applyFilter azureTable props.CancellationToken props.MaxElements
+                let results = results |> Seq.toList
+
+                return [| for result in results -> mapper result |]
             with exn ->
                 return failwithf "Execute failed with exn: %s" exn.Message
         }
@@ -420,10 +455,12 @@ module AzureTable =
         task {
             try
                 let azureTable = getTable props
+
                 let applyFilter =
                     match props.Filter with
                     | Some filters -> filters |> toQuery
                     | None -> None
+
                 let! pageAble = queryAsync applyFilter azureTable
                 let resultEnum = pageAble.AsPages().GetAsyncEnumerator()
 
@@ -432,18 +469,46 @@ module AzureTable =
 
                 while hasValue do
                     let! page = resultEnum.MoveNextAsync()
+
                     match page with
                     | true -> allValues.AddRange(resultEnum.Current.Values)
                     | false -> hasValue <- false
 
                 return
-                    allValues.ToArray() |> Array.map (fun v ->
-                    let e = AzureTackleRowEntity(v)
-                    read e
-                    )
-                // return result
-            with
-            | exn -> return failwithf "ExecuteAsync failed with exn: %s" exn.Message
+                    allValues.ToArray()
+                    |> Array.map (fun v ->
+                        let e = AzureTackleRowEntity(v)
+                        read e)
+            with exn ->
+                return failwithf "ExecuteAsync failed with exn: %s" exn.Message
+        }
+
+    let executeAsyncWithMapper mapper (props: TableProps) =
+        task {
+            try
+                let azureTable = getTable props
+
+                let applyFilter =
+                    match props.Filter with
+                    | Some filters -> filters |> toQuery
+                    | None -> None
+
+                let! pageAble = queryAsync applyFilter azureTable
+                let resultEnum = pageAble.AsPages().GetAsyncEnumerator()
+
+                let mutable hasValue = true
+                let mutable allValues = System.Collections.Generic.List()
+
+                while hasValue do
+                    let! page = resultEnum.MoveNextAsync()
+
+                    match page with
+                    | true -> allValues.AddRange(resultEnum.Current.Values)
+                    | false -> hasValue <- false
+
+                return allValues.ToArray() |> Array.map (fun v -> mapper v)
+            with exn ->
+                return failwithf "ExecuteAsync failed with exn: %s" exn.Message
         }
 
     let executeDirect (read: AzureTackleRowEntity -> 't) (props: TableProps) =
@@ -456,13 +521,14 @@ module AzureTable =
                     | Some filters -> filters |> toQuery
                     | None -> None
 
-                let! results = query applyFilter azureTable
+                let! results = query applyFilter azureTable props.CancellationToken props.MaxElements
                 let results = results |> Seq.toList
 
-                return
-                    [| for result in results ->
-                           let e = AzureTackleRowEntity(result)
-                           read e |]
+                return [|
+                    for result in results ->
+                        let e = AzureTackleRowEntity(result)
+                        read e
+                |]
             with exn ->
                 return failwithf "ExecuteDirect failed with exn: %s" exn.Message
         }
@@ -472,10 +538,15 @@ module AzureTable =
             try
                 let azureTable = getTable props
 
-                let entity =
-                    TableEntity(partKey, rowKey) |> set
+                let entity = TableEntity(partKey, rowKey) |> set
 
-                let! _ = azureTable.UpsertEntityAsync(entity, TableUpdateMode.Replace, CancellationToken.None)
+                let! _ =
+                    azureTable.UpsertEntityAsync(
+                        entity,
+                        TableUpdateMode.Replace,
+                        props.CancellationToken |> Option.defaultValue CancellationToken.None
+                    )
+
                 return ()
             with exn ->
                 return failwithf "Upsert failed with exn: %s" exn.Message
@@ -485,7 +556,14 @@ module AzureTable =
         task {
             try
                 let azureTable = getTable props
-                let! _ = azureTable.UpsertEntityAsync(entity, TableUpdateMode.Replace, CancellationToken.None)
+
+                let! _ =
+                    azureTable.UpsertEntityAsync(
+                        entity,
+                        TableUpdateMode.Replace,
+                        props.CancellationToken |> Option.defaultValue CancellationToken.None
+                    )
+
                 return ()
             with exn ->
                 return failwithf "Upsert failed with exn: %s" exn.Message

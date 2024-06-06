@@ -1,3 +1,5 @@
+#### 2.0.6 - 2024-06-06
+* Add withCancellationToken, withMaxElements, executeWithMapper executeAsyncWithMapper
 #### 2.0.5 - 2024-06-06
 * Add executeAsync
 #### 2.0.4 - 2024-06-03

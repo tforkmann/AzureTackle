@@ -104,6 +104,50 @@ let simpleTest =
 
             Expect.equal results (Some testData) "Insert test data is the same the readed testdata"
         }
+        // testTask "Insert test data to table and async read data from the table directly" {
+
+        //     let testData = {
+        //         PartKey = "PartKey"
+        //         RowKey = DateTime(2024, 1, 1) |> SortedRowKey.toSortedRowKey
+        //         Date = DateTime(2024, 1, 1) |> DateTimeOffset
+        //         Value = 0.2
+        //         ValueDecimal = 0.2m
+        //         Exists = true
+        //         Text = "isWorking"
+        //     }
+
+        //     do!
+        //         tableProps
+        //         |> AzureTable.upsertInline (testData.PartKey, testData.RowKey) (fun set ->
+        //             set.Add("Date", testData.Date)
+        //             set.Add("Value", testData.Value)
+        //             set.Add("ValueDecimal", testData.ValueDecimal)
+        //             set.Add("Exists", testData.Exists)
+        //             set.Add("Text", testData.Text)
+        //             set)
+
+        //     let mapper (tableEntity :TableEntity)=
+        //         {
+        //             PartKey = tableEntity.PartitionKey
+        //             RowKey = tableEntity.RowKey
+        //             Date =  tableEntity.GetDateTimeOffset("Date").Value
+        //             Exists = tableEntity.GetBoolean("Exists").Value
+        //             Value = tableEntity.GetDouble("Value").Value
+        //             ValueDecimal = tableEntity.GetDouble("ValueDecimal").Value |> decimal
+        //             Text = tableEntity.GetString("Text")
+        //         }
+
+        //     let! values =
+        //         tableProps
+        //         |> AzureTable.filter (RowKey testData.RowKey)
+        //         |> AzureTable.withCancellationToken (CancellationToken.None)
+        //         |> AzureTable.withMaxElements 150
+        //         |> AzureTable.executeAsyncWithMapper mapper
+
+        //     let results = values |> Array.tryHead
+
+        //     Expect.equal results (Some testData) "Insert test data is the same the readed testdata"
+        // }
         testTask "Insert test data as batch to table and receive exactly one value from the table" {
             let rowKey = DateTime(2024, 1, 1) |> SortedRowKey.toSortedRowKey
 
