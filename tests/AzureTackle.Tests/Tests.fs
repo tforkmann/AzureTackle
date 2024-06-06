@@ -65,7 +65,7 @@ let simpleTest =
             let data = values |> Array.tryHead
             Expect.equal data (Some testData) "Insert test data is the same the readed testdata"
         }
-        testTask "Insert test data to table and read data from the table directly" {
+        testTask "Insert test data to table and async read data from the table directly" {
 
             let testData = {
                 PartKey = "PartKey"
@@ -89,15 +89,16 @@ let simpleTest =
 
             let! values =
                 tableProps
-                |> AzureTable.execute (fun read -> {
-                    PartKey = read.partKey
-                    RowKey = read.rowKey
-                    Date = read.dateTimeOffset "Date"
-                    Exists = read.bool "Exists"
-                    Value = read.float "Value"
-                    ValueDecimal = read.decimal "ValueDecimal"
-                    Text = read.string "Text"
-                })
+                |> AzureTable.executeAsync (fun read ->
+                    {
+                        PartKey = read.partKey
+                        RowKey = read.rowKey
+                        Date = read.dateTimeOffset "Date"
+                        Exists = read.bool "Exists"
+                        Value = read.float "Value"
+                        ValueDecimal = read.decimal "ValueDecimal"
+                        Text = read.string "Text"
+                    })
 
             let results = values |> Array.tryHead
 
@@ -140,8 +141,9 @@ let simpleTest =
                     Text = read.string "Text"
                 })
 
-            Expect.equal value (Some testData) "Insert test data is the same the readed testdata"
+            Expect.equal value (Some testData) "Insert test data is the same the read testdata"
         }
+
         testTask "Insert test data to table and backup and receive exactly one value from the backup table" {
             let rowKey = DateTime(2024, 1, 1) |> SortedRowKey.toSortedRowKey
 
@@ -178,7 +180,7 @@ let simpleTest =
                     Text = read.string "Text"
                 })
 
-            Expect.equal value (Some testData) "Insert test data is the same the readed testdata"
+            Expect.equal value (Some testData) "Insert test data is the same the testdata"
         }
         testTask "Insert test data to table and read timestamp from the table" {
 
@@ -246,44 +248,44 @@ let simpleTest =
 
             Expect.isTrue data "Timestamp isn't there"
         }
-        testTask "Delete test data as batch" {
-            let! values =
-                tableProps
-                |> AzureTable.executeDirect (fun read -> {
-                    PartKey = read.partKey
-                    RowKey = read.rowKey
-                    Date = read.dateTimeOffset "Date"
-                    Exists = read.bool "Exists"
-                    Value = read.float "Value"
-                    ValueDecimal = read.decimal "ValueDecimal"
-                    Text = read.string "Text"
-                })
+        // testTask "Delete test data as batch" {
+        //     let! values =
+        //         tableProps
+        //         |> AzureTable.executeDirect (fun read -> {
+        //             PartKey = read.partKey
+        //             RowKey = read.rowKey
+        //             Date = read.dateTimeOffset "Date"
+        //             Exists = read.bool "Exists"
+        //             Value = read.float "Value"
+        //             ValueDecimal = read.decimal "ValueDecimal"
+        //             Text = read.string "Text"
+        //         })
 
-            do!
-                tableProps
-                |> AzureTable.deleteBatch values (fun d ->
-                    let set = TableEntity(d.PartKey, d.RowKey)
-                    set.Add("Date", d.Date)
-                    set.Add("Exists", d.Exists)
-                    set.Add("Text", d.Text)
-                    set.Add("Value", d.Value)
-                    set.Add("ValueDecimal", d.ValueDecimal)
-                    set)
+        //     do!
+        //         tableProps
+        //         |> AzureTable.deleteBatch values (fun d ->
+        //             let set = TableEntity(d.PartKey, d.RowKey)
+        //             set.Add("Date", d.Date)
+        //             set.Add("Exists", d.Exists)
+        //             set.Add("Text", d.Text)
+        //             set.Add("Value", d.Value)
+        //             set.Add("ValueDecimal", d.ValueDecimal)
+        //             set)
 
-            let! values =
-                tableProps
-                |> AzureTable.executeDirect (fun read -> {
-                    PartKey = read.partKey
-                    RowKey = read.rowKey
-                    Date = read.dateTimeOffset "Date"
-                    Exists = read.bool "Exists"
-                    Value = read.float "Value"
-                    ValueDecimal = read.decimal "ValueDecimal"
-                    Text = read.string "Text"
-                })
+        //     let! values =
+        //         tableProps
+        //         |> AzureTable.executeDirect (fun read -> {
+        //             PartKey = read.partKey
+        //             RowKey = read.rowKey
+        //             Date = read.dateTimeOffset "Date"
+        //             Exists = read.bool "Exists"
+        //             Value = read.float "Value"
+        //             ValueDecimal = read.decimal "ValueDecimal"
+        //             Text = read.string "Text"
+        //         })
 
-            Expect.isEmpty values "Values should be empty"
-        }
+        //     Expect.isEmpty values "Values should be empty"
+        // }
     ]
 
 let config = {

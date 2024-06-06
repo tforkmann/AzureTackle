@@ -259,12 +259,12 @@ module Table =
             | None -> return table.Query<'a>("", Nullable(1500), [||], CancellationToken.None)
         }
 
-    let queryAsync (filter: string option) (table: TableClient) : Task<Azure.AsyncPageable<'a>> =
+    let queryAsync<'a> (filter: string option) (table: TableClient) =
         task {
 
             match filter with
-            | Some f -> return table.QueryAsync<'a>(f, Nullable(1500), [||], CancellationToken.None)
-            | None -> return table.QueryAsync<'a>("", Nullable(1500), [||], CancellationToken.None)
+            | Some f -> return table.QueryAsync(f, Nullable(1500), [||], CancellationToken.None)
+            | None -> return table.QueryAsync("", Nullable(1500), [||], CancellationToken.None)
         }
 
 [<RequireQualifiedAccess>]
@@ -416,28 +416,35 @@ module AzureTable =
                 return failwithf "Execute failed with exn: %s" exn.Message
         }
 
-    // let executeAsync (read: AzureTackleRowEntity -> 't,pages) (props: TableProps) =
-    //     task {
-    //         try
-    //             let azureTable = getTable props
-    //             let applyFilter =
-    //                 match props.Filter with
-    //                 | Some filters -> filters |> toQuery
-    //                 | None -> None
-    //             let! results = queryAsync applyFilter azureTable props.Token
-    //             let resultEnum = results.GetAsyncEnumerator()
+    let executeAsync (read: AzureTackleRowEntity -> 't) (props: TableProps) =
+        task {
+            try
+                let azureTable = getTable props
+                let applyFilter =
+                    match props.Filter with
+                    | Some filters -> filters |> toQuery
+                    | None -> None
+                let! pageAble = queryAsync applyFilter azureTable
+                let resultEnum = pageAble.AsPages().GetAsyncEnumerator()
 
-    //             let! hello = resultEnum.MoveNextAsync().AsTask()
+                let mutable hasValue = true
+                let mutable allValues = System.Collections.Generic.List()
 
-    //             return
-    //                 Ok [|
-    //                     for result in results ->
-    //                         let e = AzureTackleRowEntity(result)
-    //                         read e
-    //                 |]
-    //         with
-    //         | exn -> return Error exn
-    //     }
+                while hasValue do
+                    let! page = resultEnum.MoveNextAsync()
+                    match page with
+                    | true -> allValues.AddRange(resultEnum.Current.Values)
+                    | false -> hasValue <- false
+
+                return
+                    allValues.ToArray() |> Array.map (fun v ->
+                    let e = AzureTackleRowEntity(v)
+                    read e
+                    )
+                // return result
+            with
+            | exn -> return failwithf "ExecuteAsync failed with exn: %s" exn.Message
+        }
 
     let executeDirect (read: AzureTackleRowEntity -> 't) (props: TableProps) =
         task {
