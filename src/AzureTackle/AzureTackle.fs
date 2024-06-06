@@ -574,14 +574,18 @@ module AzureTable =
             try
                 let azureTable = getTable props
 
-                let actions =
+                let chunks =
                     messages
                     |> Array.map mapper
-                    |> Array.map (fun entity ->
-                        TableTransactionAction(TableTransactionActionType.UpsertReplace, entity))
+                    |> Array.chunkBySize 100
+                for chunks in chunks do
+                    let actions =
+                        chunks
+                        |> Array.map (fun entity ->
+                            TableTransactionAction(TableTransactionActionType.UpsertReplace, entity))
 
-                let! _ = azureTable.SubmitTransactionAsync(actions)
-                return ()
+                    let! _ = azureTable.SubmitTransactionAsync(actions)
+                    return ()
             with exn ->
                 return failwithf "UpsertBatch failed with exn: %s" exn.Message
         }
@@ -591,13 +595,17 @@ module AzureTable =
             try
                 let azureTable = getTable props
 
-                let actions =
+                let chunks =
                     entities
-                    |> Array.map (fun entity ->
-                        TableTransactionAction(TableTransactionActionType.UpsertReplace, entity))
+                    |> Array.chunkBySize 100
+                for chunks in chunks do
+                    let actions =
+                        chunks
+                        |> Array.map (fun entity ->
+                            TableTransactionAction(TableTransactionActionType.UpsertReplace, entity))
 
-                let! _ = azureTable.SubmitTransactionAsync(actions)
-                return ()
+                    let! _ = azureTable.SubmitTransactionAsync(actions)
+                    return ()
             with exn ->
                 return failwithf "UpsertBatch failed with exn: %s" exn.Message
         }
