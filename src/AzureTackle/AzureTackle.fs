@@ -650,17 +650,32 @@ type TableEntityExtensions =
     static member inline Append(entity: TableEntity, key: string, value: obj) =
         entity.Add(key, value)
         entity
+    [<Extension>]
+    static member inline Append(entity: TableEntity, key: string, value: float) =
+        entity.Add(key, value)
+        entity
 
-    /// Adds an optional property to the entity to allow chaining.
-    /// If the value is `None`, the property is not added.
-    /// If the value is `Some`, the property is added.
-    ///
-    /// # Parameters
-    /// - `entity`: The entity to add the property to.
-    /// - `key`: The key of the property.
-    /// - `value`: The value of the property.
+    [<Extension>]
+    static member inline Append(entity: TableEntity, key: string, value: decimal) =
+        entity.Add(key, value)
+        entity
+
     [<Extension>]
     static member inline AppendOptional(entity: TableEntity, key: string, value: 'a option) =
+        match value with
+        | Some value -> entity.Add(key, value)
+        | None -> ()
+
+        entity
+    [<Extension>]
+    static member inline AppendOptional(entity: TableEntity, key: string, value: float option) =
+        match value with
+        | Some value -> entity.Add(key, value)
+        | None -> ()
+
+        entity
+    [<Extension>]
+    static member inline AppendOptional(entity: TableEntity, key: string, value: decimal option) =
         match value with
         | Some value -> entity.Add(key, value)
         | None -> ()
