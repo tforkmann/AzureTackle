@@ -660,7 +660,7 @@ type TableEntityExtensions =
     /// - `key`: The key of the property.
     /// - `value`: The value of the property.
     [<Extension>]
-    static member inline AppendOptional(entity: TableEntity, key: string, value: obj option) =
+    static member inline AppendOptional(entity: TableEntity, key: string, value: 'a option) =
         match value with
         | Some value -> entity.Add(key, value)
         | None -> ()

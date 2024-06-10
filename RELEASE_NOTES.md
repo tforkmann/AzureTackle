@@ -1,3 +1,5 @@
+#### 2.0.8 - 2024-06-10
+* Fix appendOptional
 #### 2.0.7 - 2024-06-06
 * chunk batch operations
 #### 2.0.6 - 2024-06-06

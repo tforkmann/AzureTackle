@@ -14,7 +14,8 @@ let TestTable = "TestTable"
 type TestData = {
     PartKey: string
     RowKey: string
-    Date: DateTimeOffset
+    ValidFrom: DateTimeOffset
+    ValidTo: DateTimeOffset option
     Exists: bool
     Value: float
     ValueDecimal: decimal
@@ -32,7 +33,8 @@ let simpleTest =
             let testData = {
                 PartKey = "PartKey"
                 RowKey = DateTime(2024, 1, 1) |> SortedRowKey.toSortedRowKey
-                Date = DateTime(2024, 1, 1) |> DateTimeOffset
+                ValidFrom = DateTime(2024, 1, 1) |> DateTimeOffset
+                ValidTo = None
                 Value = 0.2
                 Exists = true
                 ValueDecimal = 0.2m
@@ -42,7 +44,8 @@ let simpleTest =
             do!
                 tableProps
                 |> AzureTable.upsertInline (testData.PartKey, testData.RowKey) (fun set ->
-                    set.Add("Date", testData.Date)
+                    set.Add("ValidFrom", testData.ValidFrom)
+                    set.Add("ValidTo", testData.ValidTo)
                     set.Add("Value", testData.Value)
                     set.Add("ValueDecimal", testData.ValueDecimal)
                     set.Add("Exists", testData.Exists)
@@ -55,7 +58,8 @@ let simpleTest =
                 |> AzureTable.execute (fun read -> {
                     PartKey = read.partKey
                     RowKey = read.rowKey
-                    Date = read.dateTimeOffset "Date"
+                    ValidFrom = read.dateTimeOffset "ValidFrom"
+                    ValidTo = read.dateTimeOffsetOrNone "ValidTo"
                     Exists = read.bool "Exists"
                     Value = read.float "Value"
                     ValueDecimal = read.decimal "ValueDecimal"
@@ -70,7 +74,8 @@ let simpleTest =
             let testData = {
                 PartKey = "PartKey"
                 RowKey = DateTime(2024, 1, 1) |> SortedRowKey.toSortedRowKey
-                Date = DateTime(2024, 1, 1) |> DateTimeOffset
+                ValidFrom = DateTime(2024, 1, 1) |> DateTimeOffset
+                ValidTo = None
                 Value = 0.2
                 ValueDecimal = 0.2m
                 Exists = true
@@ -80,7 +85,8 @@ let simpleTest =
             do!
                 tableProps
                 |> AzureTable.upsertInline (testData.PartKey, testData.RowKey) (fun set ->
-                    set.Add("Date", testData.Date)
+                    set.Add("ValidFrom", testData.ValidFrom)
+                    set.Add("ValidTo", testData.ValidTo)
                     set.Add("Value", testData.Value)
                     set.Add("ValueDecimal", testData.ValueDecimal)
                     set.Add("Exists", testData.Exists)
@@ -93,7 +99,8 @@ let simpleTest =
                     {
                         PartKey = read.partKey
                         RowKey = read.rowKey
-                        Date = read.dateTimeOffset "Date"
+                        ValidFrom = read.dateTimeOffset "ValidFrom"
+                        ValidTo = read.dateTimeOffsetOrNone "ValidTo"
                         Exists = read.bool "Exists"
                         Value = read.float "Value"
                         ValueDecimal = read.decimal "ValueDecimal"
@@ -154,7 +161,8 @@ let simpleTest =
             let testData = {
                 PartKey = "PartKey"
                 RowKey = rowKey
-                Date = DateTime(2024, 1, 1) |> System.DateTimeOffset
+                ValidFrom = DateTime(2024, 1, 1) |> DateTimeOffset
+                ValidTo = None
                 Value = 0.2
                 ValueDecimal = 0.2m
                 Exists = true
@@ -164,7 +172,8 @@ let simpleTest =
             do!
                 tableProps
                 |> AzureTable.upsertInline (testData.PartKey, testData.RowKey) (fun set ->
-                    set.Add("Date", testData.Date)
+                    set.Add("ValidFrom", testData.ValidFrom)
+                    set.Add("ValidTo", testData.ValidTo)
                     set.Add("Value", testData.Value)
                     set.Add("ValueDecimal", testData.ValueDecimal)
                     set.Add("Exists", testData.Exists)
@@ -178,7 +187,8 @@ let simpleTest =
                 |> AzureTable.receive (fun read -> {
                     PartKey = read.partKey
                     RowKey = read.rowKey
-                    Date = read.dateTimeOffset "Date"
+                    ValidFrom = read.dateTimeOffset "ValidFrom"
+                    ValidTo = read.dateTimeOffsetOrNone "ValidTo"
                     Exists = read.bool "Exists"
                     Value = read.float "Value"
                     ValueDecimal = read.decimal "ValueDecimal"
@@ -194,7 +204,8 @@ let simpleTest =
             let testData = {
                 PartKey = "PartKey"
                 RowKey = rowKey
-                Date = DateTime(2024, 1, 1) |> System.DateTimeOffset
+                ValidFrom = DateTime(2024, 1, 1) |> DateTimeOffset
+                ValidTo = None
                 Value = 0.2
                 ValueDecimal = 0.2m
                 Exists = true
@@ -203,7 +214,8 @@ let simpleTest =
 
             let entity =
                 TableEntity(testData.PartKey, testData.RowKey)
-                    .Append("Date", testData.Date)
+                    .Append("ValidFrom", testData.ValidFrom)
+                    .AppendOptional("ValidTo", testData.ValidTo)
                     .Append("Value", testData.Value)
                     .Append("ValueDecimal", testData.ValueDecimal)
                     .Append("Exists", testData.Exists)
@@ -217,7 +229,8 @@ let simpleTest =
                 |> AzureTable.receive (fun read -> {
                     PartKey = read.partKey
                     RowKey = read.rowKey
-                    Date = read.dateTimeOffset "Date"
+                    ValidFrom = read.dateTimeOffset "ValidFrom"
+                    ValidTo = read.dateTimeOffsetOrNone "ValidTo"
                     Exists = read.bool "Exists"
                     Value = read.float "Value"
                     ValueDecimal = read.decimal "ValueDecimal"
@@ -231,7 +244,8 @@ let simpleTest =
             let testData = {
                 PartKey = "PartKey"
                 RowKey = DateTime(2024, 1, 1) |> SortedRowKey.toSortedRowKey
-                Date = DateTime(2024, 1, 1) |> System.DateTimeOffset
+                ValidFrom = DateTime(2024, 1, 1) |> DateTimeOffset
+                ValidTo = None
                 Value = 0.2
                 ValueDecimal = 0.2m
                 Exists = true
@@ -241,7 +255,8 @@ let simpleTest =
             do!
                 tableProps
                 |> AzureTable.upsertInline (testData.PartKey, testData.RowKey) (fun set ->
-                    set.Add("Date", testData.Date)
+                    set.Add("ValidFrom", testData.ValidFrom)
+                    set.Add("ValidTo", testData.ValidTo)
                     set.Add("Value", testData.Value)
                     set.Add("ValueDecimal", testData.ValueDecimal)
                     set.Add("Exists", testData.Exists)
@@ -263,7 +278,8 @@ let simpleTest =
                 {
                     PartKey = "PartKey"
                     RowKey = DateTime(2024, 1, 1) |> SortedRowKey.toSortedRowKey
-                    Date = DateTime(2024, 1, 1) |> System.DateTimeOffset
+                    ValidFrom = DateTime(2024, 1, 1) |> DateTimeOffset
+                    ValidTo = None
                     Value = 0.2
                     ValueDecimal = 0.2m
                     Exists = true
@@ -275,7 +291,8 @@ let simpleTest =
                 testData
                 |> Array.map (fun d ->
                     TableEntity(d.PartKey, d.RowKey)
-                        .Append("Date", d.Date)
+                        .Append("ValidFrom", d.ValidFrom)
+                        .AppendOptional("ValidTo", d.ValidTo)
                         .Append("Exists", d.Exists)
                         .Append("Text", d.Text)
                         .Append("Value", d.Value)
