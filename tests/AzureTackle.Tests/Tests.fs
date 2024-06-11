@@ -56,14 +56,14 @@ let simpleTest =
                 tableProps
                 |> AzureTable.filter (RowKey testData.RowKey)
                 |> AzureTable.execute (fun read -> {
-                    PartKey = read.partKey
-                    RowKey = read.rowKey
-                    ValidFrom = read.dateTimeOffset "ValidFrom"
-                    ValidTo = read.dateTimeOffsetOrNone "ValidTo"
-                    Exists = read.bool "Exists"
-                    Value = read.float "Value"
-                    ValueDecimal = read.decimal "ValueDecimal"
-                    Text = read.string "Text"
+                    PartKey = read.PartitionKey
+                    RowKey = read.RowKey
+                    ValidFrom = read.ReadDateTimeOffset "ValidFrom"
+                    ValidTo = read.ReadOptionalDateTimeOffset "ValidTo"
+                    Exists = read.ReadBoolean "Exists"
+                    Value = read.ReadDouble "Value"
+                    ValueDecimal = read.ReadDecimal "ValueDecimal"
+                    Text = read.ReadString "Text"
                 })
 
             let data = values |> Array.tryHead
@@ -93,18 +93,30 @@ let simpleTest =
                     set.Add("Text", testData.Text)
                     set)
 
+            let mapper = fun (tableEntity :TableEntity) ->
+                {
+                    PartKey = tableEntity.PartitionKey
+                    RowKey = tableEntity.RowKey
+                    ValidFrom = tableEntity.ReadDateTimeOffset("ValidFrom")
+                    ValidTo = tableEntity.ReadOptionalDateTimeOffset("ValidTo")
+                    Exists = tableEntity.ReadBoolean("Exists")
+                    Value = tableEntity.GetDouble("Value").Value
+                    ValueDecimal = tableEntity.ReadDecimal("ValueDecimal")
+                    Text = tableEntity.GetString("Text")
+                }
+
             let! values =
                 tableProps
                 |> AzureTable.executeAsync (fun read ->
                     {
-                        PartKey = read.partKey
-                        RowKey = read.rowKey
-                        ValidFrom = read.dateTimeOffset "ValidFrom"
-                        ValidTo = read.dateTimeOffsetOrNone "ValidTo"
-                        Exists = read.bool "Exists"
-                        Value = read.float "Value"
-                        ValueDecimal = read.decimal "ValueDecimal"
-                        Text = read.string "Text"
+                        PartKey = read.PartitionKey
+                        RowKey = read.RowKey
+                        ValidFrom = read.ReadDateTimeOffset("ValidFrom")
+                        ValidTo = read.ReadOptionalDateTimeOffset "ValidTo"
+                        Exists = read.ReadBoolean "Exists"
+                        Value = read.ReadDouble "Value"
+                        ValueDecimal = read.ReadDecimal "ValueDecimal"
+                        Text = read.ReadString "Text"
                     })
 
             let results = values |> Array.tryHead
@@ -185,14 +197,14 @@ let simpleTest =
                 tableProps
                 |> AzureTable.filterReceive ("PartKey", rowKey)
                 |> AzureTable.receive (fun read -> {
-                    PartKey = read.partKey
-                    RowKey = read.rowKey
-                    ValidFrom = read.dateTimeOffset "ValidFrom"
-                    ValidTo = read.dateTimeOffsetOrNone "ValidTo"
-                    Exists = read.bool "Exists"
-                    Value = read.float "Value"
-                    ValueDecimal = read.decimal "ValueDecimal"
-                    Text = read.string "Text"
+                    PartKey = read.PartitionKey
+                    RowKey = read.RowKey
+                    ValidFrom = read.ReadDateTimeOffset "ValidFrom"
+                    ValidTo = read.ReadOptionalDateTimeOffset "ValidTo"
+                    Exists = read.ReadBoolean "Exists"
+                    Value = read.ReadDouble "Value"
+                    ValueDecimal = read.ReadDecimal "ValueDecimal"
+                    Text = read.ReadString "Text"
                 })
 
             Expect.equal value (Some testData) "Insert test data is the same the read testdata"
@@ -227,14 +239,14 @@ let simpleTest =
                 tableProps
                 |> AzureTable.filterReceive ("PartKey", rowKey)
                 |> AzureTable.receive (fun read -> {
-                    PartKey = read.partKey
-                    RowKey = read.rowKey
-                    ValidFrom = read.dateTimeOffset "ValidFrom"
-                    ValidTo = read.dateTimeOffsetOrNone "ValidTo"
-                    Exists = read.bool "Exists"
-                    Value = read.float "Value"
-                    ValueDecimal = read.decimal "ValueDecimal"
-                    Text = read.string "Text"
+                    PartKey = read.PartitionKey
+                    RowKey = read.RowKey
+                    ValidFrom = read.ReadDateTimeOffset "ValidFrom"
+                    ValidTo = read.ReadOptionalDateTimeOffset "ValidTo"
+                    Exists = read.ReadBoolean "Exists"
+                    Value = read.ReadDouble "Value"
+                    ValueDecimal = read.ReadDecimal "ValueDecimal"
+                    Text = read.ReadString "Text"
                 })
 
             Expect.equal value (Some testData) "Insert test data is the same the testdata"
@@ -266,7 +278,7 @@ let simpleTest =
             let! timeStamps =
                 tableProps
                 |> AzureTable.filter (RowKey testData.RowKey)
-                |> AzureTable.execute (fun read -> read.timeStamp)
+                |> AzureTable.execute (fun read -> read.Timestamp)
 
             let data = timeStamps |> Array.tryHead |> Option.isSome
 
@@ -303,7 +315,7 @@ let simpleTest =
             let! timeStamps =
                 tableProps
                 |> AzureTable.filter (RowKey testData.[0].RowKey)
-                |> AzureTable.execute (fun read -> read.timeStamp)
+                |> AzureTable.execute (fun read -> read.Timestamp)
 
             let data = timeStamps |> Array.tryHead |> Option.isSome
 

@@ -389,7 +389,7 @@ module AzureTable =
         | Some table -> table
         | None -> failwith "please add a table"
 
-    let receive (read: AzureTackleRowEntity -> 't) (props: TableProps) =
+    let receive (read: TableEntity -> 't) (props: TableProps) =
         task {
             let azureTableConfig =
                 match props.AzureTableConfig with
@@ -408,10 +408,10 @@ module AzureTable =
 
             let! result = receiveValue keys azureTable
 
-            return result |> Option.map AzureTackleRowEntity |> Option.map read
+            return result |> Option.map read
         }
 
-    let execute (read: AzureTackleRowEntity -> 't) (props: TableProps) =
+    let execute (read: TableEntity -> 't) (props: TableProps) =
         task {
             try
                 let azureTable = getTable props
@@ -426,8 +426,7 @@ module AzureTable =
 
                 return [|
                     for result in results ->
-                        let e = AzureTackleRowEntity(result)
-                        read e
+                        read result
                 |]
             with exn ->
                 return failwithf "Execute failed with exn: %s" exn.Message
@@ -451,7 +450,7 @@ module AzureTable =
                 return failwithf "Execute failed with exn: %s" exn.Message
         }
 
-    let executeAsync (read: AzureTackleRowEntity -> 't) (props: TableProps) =
+    let executeAsync (read: TableEntity -> 't) (props: TableProps) =
         task {
             try
                 let azureTable = getTable props
@@ -477,8 +476,7 @@ module AzureTable =
                 return
                     allValues.ToArray()
                     |> Array.map (fun v ->
-                        let e = AzureTackleRowEntity(v)
-                        read e)
+                        read v)
             with exn ->
                 return failwithf "ExecuteAsync failed with exn: %s" exn.Message
         }
@@ -511,7 +509,7 @@ module AzureTable =
                 return failwithf "ExecuteAsync failed with exn: %s" exn.Message
         }
 
-    let executeDirect (read: AzureTackleRowEntity -> 't) (props: TableProps) =
+    let executeDirect (read: TableEntity -> 't) (props: TableProps) =
         task {
             try
                 let azureTable = getTable props
@@ -526,8 +524,7 @@ module AzureTable =
 
                 return [|
                     for result in results ->
-                        let e = AzureTackleRowEntity(result)
-                        read e
+                        read result
                 |]
             with exn ->
                 return failwithf "ExecuteDirect failed with exn: %s" exn.Message
@@ -681,3 +678,110 @@ type TableEntityExtensions =
         | None -> ()
 
         entity
+
+    [<Extension>]
+    static member ReadString (entity:TableEntity,propName:string) =
+        entity.GetString(propName)
+
+    [<Extension>]
+    static member inline ReadOptionalString (entity:TableEntity,propName:string) =
+        if entity.ContainsKey propName then
+            Some(entity.GetString(propName))
+        else
+            None
+    [<Extension>]
+    static member ReadBoolean (entity:TableEntity,propName:string) =
+        entity.GetBoolean(propName).Value
+
+    [<Extension>]
+    static member inline ReadOptionalBoolean (entity:TableEntity,propName:string) =
+        if entity.ContainsKey propName then
+            Some(entity.GetBoolean(propName).Value)
+        else
+            None
+
+    [<Extension>]
+    static member ReadInt (entity:TableEntity,propName:string) =
+        try
+            entity.GetInt32(propName).Value
+        with
+        | _ -> (entity.GetInt32(propName).Value)
+
+    [<Extension>]
+    static member inline ReadOptionalInt (entity:TableEntity,propName:string) =
+        if entity.ContainsKey propName then
+            Some(entity.ReadInt(propName))
+        else
+            None
+
+    [<Extension>]
+    static member ReadBigInt (entity:TableEntity,propName:string) =
+        try
+            entity.GetInt64(propName).Value
+        with
+        | _ -> (entity.GetInt64(propName).Value)
+
+    [<Extension>]
+    static member inline ReadOptionalBigInt (entity:TableEntity,propName:string) =
+        if entity.ContainsKey propName then
+            Some(entity.ReadBigInt(propName))
+        else
+            None
+    [<Extension>]
+    static member ReadBinary (entity:TableEntity,propName:string) =
+        entity.GetBinary(propName)
+
+    [<Extension>]
+    static member inline ReadOptionalBinary (entity:TableEntity,propName:string) =
+        if entity.ContainsKey propName then
+            Some(entity.ReadBinary(propName))
+        else
+            None
+
+    [<Extension>]
+    static member ReadDouble (entity:TableEntity,propName:string) =
+        try
+            entity.GetDouble(propName).Value
+        with
+        | _ -> double (entity.GetInt32(propName).Value)
+
+    [<Extension>]
+    static member inline ReadOptionalDouble (entity:TableEntity,propName:string) =
+        if entity.ContainsKey propName then
+            Some(entity.ReadDouble(propName))
+        else
+            None
+    [<Extension>]
+    static member ReadDecimal (entity:TableEntity,propName:string) =
+        try
+            entity.GetDouble(propName).Value |> decimal
+        with
+        | _ -> entity.GetInt32(propName).Value |> decimal
+
+    [<Extension>]
+    static member inline ReadOptionalDecimal (entity:TableEntity,propName:string) =
+        if entity.ContainsKey propName then
+            Some(entity.ReadDecimal(propName))
+        else
+            None
+
+    [<Extension>]
+    static member ReadDateTime (entity:TableEntity,propName:string) =
+        entity.GetDateTime(propName).Value
+
+    [<Extension>]
+    static member inline ReadOptionalDateTime (entity:TableEntity,propName:string) =
+        if entity.ContainsKey propName then
+            Some(entity.GetDateTime(propName).Value)
+        else
+            None
+    [<Extension>]
+    static member ReadDateTimeOffset (entity:TableEntity,propName:string) =
+        entity.GetDateTimeOffset(propName).Value
+
+    [<Extension>]
+    static member inline ReadOptionalDateTimeOffset (entity:TableEntity,propName:string) =
+        if entity.ContainsKey propName then
+            Some(entity.GetDateTimeOffset(propName).Value)
+        else
+            None

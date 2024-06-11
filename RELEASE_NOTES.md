@@ -1,3 +1,5 @@
+#### 2.0.10 - 2024-06-11
+* Add read extensions to table entity and remove rowreader
 #### 2.0.9 - 2024-06-10
 * Add overloads for float and decimal
 #### 2.0.8 - 2024-06-10
