@@ -1,3 +1,5 @@
+#### 2.0.11 - 2024-06-17
+* Fixes
 #### 2.0.10 - 2024-06-11
 * Add read extensions to table entity and remove rowreader
 #### 2.0.9 - 2024-06-10
