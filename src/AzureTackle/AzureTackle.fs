@@ -256,14 +256,6 @@ module Table =
                     )
         }
 
-    let queryAsync<'a> (filter: string option) (table: TableClient) =
-        task {
-
-            match filter with
-            | Some f -> return table.QueryAsync(f, Nullable(1500), [||], CancellationToken.None)
-            | None -> return table.QueryAsync("", Nullable(1500), [||], CancellationToken.None)
-        }
-
 [<RequireQualifiedAccess>]
 module AzureTable =
     open Table
@@ -450,17 +442,26 @@ module AzureTable =
                 return failwithf "Execute failed with exn: %s" exn.Message
         }
 
-    let executeAsync (read: TableEntity -> 't) (props: TableProps) =
+    let executeAsync (mapF: TableEntity -> 't) (props: TableProps) =
         task {
             try
                 let azureTable = getTable props
 
-                let applyFilter =
+                let filter =
                     match props.Filter with
-                    | Some filters -> filters |> toQuery
-                    | None -> None
+                    | Some filters -> filters |> toQuery |> Option.defaultValue ""
+                    | None -> ""
 
-                let! pageAble = queryAsync applyFilter azureTable
+                let maxElements =
+                    match props.MaxElements with
+                    | Some x -> min x 1000
+                    | None -> 1000
+
+                let pageAble =
+                    match props.CancellationToken with
+                    | Some t -> azureTable.QueryAsync(filter = filter, maxPerPage = maxElements, cancellationToken = t)
+                    | None -> azureTable.QueryAsync(filter = filter, maxPerPage = maxElements)
+
                 let resultEnum = pageAble.AsPages().GetAsyncEnumerator()
 
                 let mutable hasValue = true
@@ -475,39 +476,11 @@ module AzureTable =
 
                 return
                     allValues.ToArray()
-                    |> Array.map (fun v ->
-                        read v)
+                    |> Array.map mapF
             with exn ->
                 return failwithf "ExecuteAsync failed with exn: %s" exn.Message
         }
 
-    let executeAsyncWithMapper mapper (props: TableProps) =
-        task {
-            try
-                let azureTable = getTable props
-
-                let applyFilter =
-                    match props.Filter with
-                    | Some filters -> filters |> toQuery
-                    | None -> None
-
-                let! pageAble = queryAsync applyFilter azureTable
-                let resultEnum = pageAble.AsPages().GetAsyncEnumerator()
-
-                let mutable hasValue = true
-                let mutable allValues = System.Collections.Generic.List()
-
-                while hasValue do
-                    let! page = resultEnum.MoveNextAsync()
-
-                    match page with
-                    | true -> allValues.AddRange(resultEnum.Current.Values)
-                    | false -> hasValue <- false
-
-                return allValues.ToArray() |> Array.map (fun v -> mapper v)
-            with exn ->
-                return failwithf "ExecuteAsync failed with exn: %s" exn.Message
-        }
 
     let executeDirect (read: TableEntity -> 't) (props: TableProps) =
         task {
