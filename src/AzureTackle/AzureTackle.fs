@@ -403,45 +403,6 @@ module AzureTable =
             return result |> Option.map read
         }
 
-    let execute (read: TableEntity -> 't) (props: TableProps) =
-        task {
-            try
-                let azureTable = getTable props
-
-                let applyFilter =
-                    match props.Filter with
-                    | Some filters -> filters |> toQuery
-                    | None -> None
-
-                let! results = query applyFilter azureTable props.CancellationToken props.MaxElements
-                let results = results |> Seq.toList
-
-                return [|
-                    for result in results ->
-                        read result
-                |]
-            with exn ->
-                return failwithf "Execute failed with exn: %s" exn.Message
-        }
-
-    let executeWithMapper mapper (props: TableProps) =
-        task {
-            try
-                let azureTable = getTable props
-
-                let applyFilter =
-                    match props.Filter with
-                    | Some filters -> filters |> toQuery
-                    | None -> None
-
-                let! results = query applyFilter azureTable props.CancellationToken props.MaxElements
-                let results = results |> Seq.toList
-
-                return [| for result in results -> mapper result |]
-            with exn ->
-                return failwithf "Execute failed with exn: %s" exn.Message
-        }
-
     let executeAsync (mapF: TableEntity -> 't) (props: TableProps) =
         task {
             try
@@ -479,28 +440,6 @@ module AzureTable =
                     |> Array.map mapF
             with exn ->
                 return failwithf "ExecuteAsync failed with exn: %s" exn.Message
-        }
-
-
-    let executeDirect (read: TableEntity -> 't) (props: TableProps) =
-        task {
-            try
-                let azureTable = getTable props
-
-                let applyFilter =
-                    match props.Filter with
-                    | Some filters -> filters |> toQuery
-                    | None -> None
-
-                let! results = query applyFilter azureTable props.CancellationToken props.MaxElements
-                let results = results |> Seq.toList
-
-                return [|
-                    for result in results ->
-                        read result
-                |]
-            with exn ->
-                return failwithf "ExecuteDirect failed with exn: %s" exn.Message
         }
 
     let upsertInline (partKey, rowKey) (set: TableEntity -> TableEntity) (props: TableProps) =
