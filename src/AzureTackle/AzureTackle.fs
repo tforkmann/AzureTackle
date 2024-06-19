@@ -221,41 +221,6 @@ module Table =
             return table
         }
 
-    let receiveValue (partKey, rowKey) (table: TableClient) =
-        task {
-            let! response = table.GetEntityAsync(partKey, rowKey)
-            let result = response.Value
-
-            if isNull result then return None else return Some result
-        }
-
-    let query
-        (filter: string option)
-        (table: TableClient)
-        (cancellationToken: CancellationToken option)
-        (maxElements: int option)
-        : Task<Azure.Pageable<'a>> =
-        task {
-
-            match filter with
-            | Some f ->
-                return
-                    table.Query<'a>(
-                        f,
-                        Nullable(maxElements |> Option.defaultValue 1000),
-                        [||],
-                        cancellationToken |> Option.defaultValue CancellationToken.None
-                    )
-            | None ->
-                return
-                    table.Query<'a>(
-                        "",
-                        Nullable(maxElements |> Option.defaultValue 1000),
-                        [||],
-                        cancellationToken |> Option.defaultValue CancellationToken.None
-                    )
-        }
-
 [<RequireQualifiedAccess>]
 module AzureTable =
     open Table
@@ -268,7 +233,6 @@ module AzureTable =
 
     type TableProps = {
         Filter: AzureFilter option
-        FilterReceive: (string * string) option
         CancellationToken: CancellationToken option
         MaxElements: int option
         AzureTableConfig: AzureTableConfig option
@@ -282,7 +246,6 @@ module AzureTable =
 
     let private defaultProps () = {
         Filter = None
-        FilterReceive = None
         MaxElements = None
         CancellationToken = None
         AzureTableConfig = None
@@ -356,11 +319,6 @@ module AzureTable =
 
     let filter (filter: AzureFilter) (props: TableProps) = { props with Filter = Some filter }
 
-    let filterReceive (partKey, rowKey) (props: TableProps) = {
-        props with
-            FilterReceive = Some(partKey, rowKey)
-    }
-
     let withCancellationToken (cancellationToken: CancellationToken) (props: TableProps) = {
         props with
             CancellationToken = Some cancellationToken
@@ -381,29 +339,20 @@ module AzureTable =
         | Some table -> table
         | None -> failwith "please add a table"
 
-    let receive (read: TableEntity -> 't) (props: TableProps) =
+    let receive partitionKey rowKey (mapF: TableEntity -> 't) (props: TableProps) =
         task {
-            let azureTableConfig =
-                match props.AzureTableConfig with
-                | Some x -> x
-                | _ -> failwith "please add a storage account"
+            let azureTable = getTable props
 
-            let azureTable =
-                match azureTableConfig.AzureTable with
-                | Some table -> table
-                | None -> failwith "please add a table"
+            let! response = azureTable.GetEntityAsync(partitionKey, rowKey)
+            let result = response.Value
 
-            let keys =
-                match props.FilterReceive with
-                | Some keys -> keys
-                | None -> failwith "please use filterReceive to set a the PartitionKey and RowKey"
-
-            let! result = receiveValue keys azureTable
-
-            return result |> Option.map read
+            if isNull result then
+                return None
+            else
+                return Some (mapF result)
         }
 
-    let executeAsync (mapF: TableEntity -> 't) (props: TableProps) =
+    let execute (mapF: TableEntity -> 't) (props: TableProps) =
         task {
             try
                 let azureTable = getTable props
