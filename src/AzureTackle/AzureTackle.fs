@@ -339,7 +339,7 @@ module AzureTable =
         | Some table -> table
         | None -> failwith "please add a table"
 
-    let receive partitionKey rowKey (mapF: TableEntity -> 't) (props: TableProps) =
+    let tryGetValue partitionKey rowKey (mapF: TableEntity -> 't) (props: TableProps) =
         task {
             let azureTable = getTable props
 
