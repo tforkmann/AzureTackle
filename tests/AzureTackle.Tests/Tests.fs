@@ -55,7 +55,7 @@ let simpleTest =
             let! values =
                 tableProps
                 |> AzureTable.filter (RowKey testData.RowKey)
-                |> AzureTable.execute (fun read -> {
+                |> AzureTable.executeAsync (fun read -> {
                     PartKey = read.PartitionKey
                     RowKey = read.RowKey
                     ValidFrom = read.ReadDateTimeOffset "ValidFrom"
@@ -278,7 +278,7 @@ let simpleTest =
             let! timeStamps =
                 tableProps
                 |> AzureTable.filter (RowKey testData.RowKey)
-                |> AzureTable.execute (fun read -> read.Timestamp)
+                |> AzureTable.executeAsync (fun read -> read.Timestamp)
 
             let data = timeStamps |> Array.tryHead |> Option.isSome
 
@@ -315,7 +315,7 @@ let simpleTest =
             let! timeStamps =
                 tableProps
                 |> AzureTable.filter (RowKey testData.[0].RowKey)
-                |> AzureTable.execute (fun read -> read.Timestamp)
+                |> AzureTable.executeAsync (fun read -> read.Timestamp)
 
             let data = timeStamps |> Array.tryHead |> Option.isSome
 
