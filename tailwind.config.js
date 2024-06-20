@@ -3,7 +3,7 @@ module.exports = {
         themes: true
     },
     content: [
-        "./src/Docs/.fable-build/**/*.{js,ts,jsx,tsx}",
+        "./src/docs/.fable-build/**/*.{js,ts,jsx,tsx}",
     ],
     plugins: [
         require('daisyui'),
