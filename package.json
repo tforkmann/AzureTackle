@@ -7,7 +7,7 @@
         "vite:build:docs": "vite build ./src/Docs",
         "prestart": "dotnet tool restore",
         "startdocs": "cross-os startdocs",
-        "build": "dotnet fable ./src/Docs --outDir src/Docs/output && vite build ./src/docs --outDir ./../../output/docs"
+        "build": "dotnet fable ./src/docs --outDir src/docs/output && vite build ./src/docs --outDir ./../../output/docs"
     },
     "cross-os": {
         "startdocs": {
