@@ -1,19 +1,18 @@
-import { printf, toText, split } from "./fable_modules/fable-library-js.4.17.0/String.js";
 import { empty, singleton, append, delay, toList, mapIndexed } from "./fable_modules/fable-library-js.4.17.0/Seq.js";
 import { createElement } from "react";
 import { int32ToString, createObj } from "./fable_modules/fable-library-js.4.17.0/Util.js";
 import { Interop_reactApi } from "./fable_modules/Feliz.2.7.0/Interop.fs.js";
+import { printf, toText, split } from "./fable_modules/fable-library-js.4.17.0/String.js";
 import { ofArray, singleton as singleton_1 } from "./fable_modules/fable-library-js.4.17.0/List.js";
 import { Helpers_combineClasses } from "./fable_modules/Feliz.DaisyUI.4.2.1/DaisyUI.fs.js";
 
 export function linedMockupCode(code) {
-    const lines = split(code, ["\n"], undefined, 0);
     const children = mapIndexed((i, l) => createElement("pre", createObj(toList(delay(() => append(singleton(["data-prefix", int32ToString(i + 1)]), delay(() => append((l.indexOf("// ") >= 0) ? singleton(["className", "text-warning"]) : empty(), delay(() => {
         let elems;
         return singleton((elems = [createElement("code", {
             children: [l],
         })], ["children", Interop_reactApi.Children.toArray(Array.from(elems))]));
-    })))))))), lines);
+    })))))))), split(code, ["\n"], undefined, 0));
     return createElement("div", {
         className: "mockup-code",
         children: Interop_reactApi.Children.toArray(Array.from(children)),

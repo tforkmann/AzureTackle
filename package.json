@@ -6,7 +6,8 @@
         "vite:serve:docs": "vite serve ./src/Docs --port 5000",
         "vite:build:docs": "vite build ./src/Docs",
         "prestart": "dotnet tool restore",
-        "startdocs": "cross-os startdocs"
+        "startdocs": "cross-os startdocs",
+        "build": "dotnet fable ./src/Docs --outDir src/Docs/output && vite build ./src/docs --outDir ./../../output/docs"
     },
     "cross-os": {
         "startdocs": {

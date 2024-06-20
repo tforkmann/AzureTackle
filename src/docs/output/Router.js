@@ -3,7 +3,7 @@ import { union_type } from "./fable_modules/fable-library-js.4.17.0/Reflection.j
 import { append, singleton, empty, tail, head, isEmpty } from "./fable_modules/fable-library-js.4.17.0/List.js";
 import { RouterModule_trySeparateLast, RouterModule_encodeQueryString, RouterModule_nav } from "./fable_modules/Feliz.Router.4.0.0/Router.fs.js";
 import { map, defaultArgWith } from "./fable_modules/fable-library-js.4.17.0/Option.js";
-import { Cmd_ofEffect } from "./fable_modules/Fable.Elmish.4.1.0/cmd.fs.js";
+import { Cmd_ofEffect } from "./fable_modules/Fable.Elmish.4.2.0/cmd.fs.js";
 
 export class Page extends Union {
     constructor(tag, fields) {
@@ -130,17 +130,14 @@ export function PageModule_toUrlSegments(_arg) {
 
 export function Router_goToUrl(e) {
     e.preventDefault();
-    const href = e.currentTarget.attributes.href.value;
-    RouterModule_nav(singleton(href), 1, 1);
+    RouterModule_nav(singleton(e.currentTarget.attributes.href.value), 1, 1);
 }
 
 export function Router_navigatePage(p) {
     const tupledArg = PageModule_toUrlSegments(p);
     const queryString = tupledArg[1];
     defaultArgWith(map((tupledArg_1) => {
-        const r = tupledArg_1[0];
-        const l = tupledArg_1[1];
-        RouterModule_nav(append(r, singleton(l + RouterModule_encodeQueryString(queryString))), 1, 1);
+        RouterModule_nav(append(tupledArg_1[0], singleton(tupledArg_1[1] + RouterModule_encodeQueryString(queryString))), 1, 1);
     }, RouterModule_trySeparateLast(tupledArg[0])), () => {
         RouterModule_nav(singleton(RouterModule_encodeQueryString(queryString)), 1, 1);
     });
@@ -151,9 +148,7 @@ export function Cmd_navigatePage(p) {
     return Cmd_ofEffect((_arg_1) => {
         const queryString_1 = tupledArg[1];
         defaultArgWith(map((tupledArg_1) => {
-            const r = tupledArg_1[0];
-            const l = tupledArg_1[1];
-            RouterModule_nav(append(r, singleton(l + RouterModule_encodeQueryString(queryString_1))), 1, 1);
+            RouterModule_nav(append(tupledArg_1[0], singleton(tupledArg_1[1] + RouterModule_encodeQueryString(queryString_1))), 1, 1);
         }, RouterModule_trySeparateLast(tupledArg[0])), () => {
             RouterModule_nav(singleton(RouterModule_encodeQueryString(queryString_1)), 1, 1);
         });
