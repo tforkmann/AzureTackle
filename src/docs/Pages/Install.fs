@@ -15,7 +15,7 @@ let InstallView () =
                   Html.pre [
                       mockupCode.prefix "$"
                       prop.children [
-                          Html.code "Install-Package Feliz.ChartJS"
+                          Html.code "Install-Package AzureTackle"
                       ]
                   ]
               ] ]
@@ -26,7 +26,7 @@ let InstallView () =
                   Html.pre [
                       mockupCode.prefix "$"
                       prop.children [
-                          Html.code "paket add Feliz.ChartJS"
+                          Html.code "paket add AzureTackle"
                       ]
                   ]
               ] ]

@@ -228,7 +228,7 @@ Target.create "InstallDocs" (fun _ ->
 Target.create "PublishDocs" (fun _ -> run npm "run build" ".")
 
 Target.create "RunDocs" (fun _ ->
-    run npm "run startdocs" ".")
+    run npm "run start" ".")
 
 Target.runOrDefault "Build"
 

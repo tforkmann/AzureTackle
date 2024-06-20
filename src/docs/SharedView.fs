@@ -90,7 +90,7 @@ let codedNoExampleView (title: ReactElement) (code: string) =
 let fixDocsView fileName client =
     Html.div [
         Html.a [
-            prop.href (sprintf "https://github.com/tforkmann/Feliz.ChartJS/blob/main/src/Docs/views/Feliz.ChartJS/%s.fs" fileName)
+            prop.href (sprintf "https://github.com/tforkmann/AzureTackle/blob/main/src/Docs/views/AzureTackle/%s.fs" fileName)
             prop.text ("Fix docs file " + fileName + " here")
         ]
     ]

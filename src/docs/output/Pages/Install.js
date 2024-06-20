@@ -33,3 +33,4 @@ export function InstallView() {
     return react.createElement(react.Fragment, {}, ...xs_8);
 }
 
+//# sourceMappingURL=Install.js.map

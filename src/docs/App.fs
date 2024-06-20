@@ -1,7 +1,6 @@
 module Docs.App
 
 open Elmish
-open Elmish.React
 
 #if DEBUG
 open Elmish.Debug

@@ -51,10 +51,12 @@ export function init() {
 
 export function update(msg, state) {
     if (msg.tag === 1) {
-        return [new State(state.Page, msg.fields[0]), Cmd_none()];
+        const theme = msg.fields[0];
+        return [new State(state.Page, theme), Cmd_none()];
     }
     else {
-        return [new State(msg.fields[0], state.Theme), Cmd_none()];
+        const page = msg.fields[0];
+        return [new State(page, state.Theme), Cmd_none()];
     }
 }
 
@@ -84,10 +86,37 @@ function rightSide(state, dispatch, title, docLink, elm) {
 
 function leftSide(p) {
     let elems_5, elm, elems_2, elems_4, children_5;
+    const miBadge = (b, t, mp) => {
+        const children = singleton(createElement("a", createObj(toList(delay(() => {
+            let tupledArg, queryString;
+            return append(singleton_1(["href", (tupledArg = PageModule_toUrlSegments(mp), (queryString = tupledArg[1], defaultArgWith(map((tupledArg_1) => {
+                const r = tupledArg_1[0];
+                const l = tupledArg_1[1];
+                return RouterModule_encodeParts(append_1(r, singleton(l + RouterModule_encodeQueryString(queryString))), 1);
+            }, RouterModule_trySeparateLast(tupledArg[0])), () => RouterModule_encodeParts(singleton(RouterModule_encodeQueryString(queryString)), 1))))]), delay(() => append(singleton_1(["onClick", (e) => {
+                Router_goToUrl(e);
+            }]), delay(() => append(equals(p, mp) ? singleton_1(op_PlusPlus(["className", "active"], ["className", "justify-between"])) : singleton_1(["className", "justify-between"]), delay(() => {
+                let elems;
+                return singleton_1((elems = [createElement("span", {
+                    children: [t],
+                }), createElement("span", {
+                    className: "badge",
+                    children: b,
+                })], ["children", Interop_reactApi.Children.toArray(Array.from(elems))]));
+            }))))));
+        })))));
+        return createElement("li", {
+            children: Interop_reactApi.Children.toArray(Array.from(children)),
+        });
+    };
     const mi = (t_1, mp_1) => {
         const children_2 = singleton(createElement("a", createObj(toList(delay(() => append(equals(p, mp_1) ? singleton_1(["className", "active"]) : empty(), delay(() => append(singleton_1(["children", t_1]), delay(() => {
             let tupledArg_2, queryString_1;
-            return append(singleton_1(["href", (tupledArg_2 = PageModule_toUrlSegments(mp_1), (queryString_1 = tupledArg_2[1], defaultArgWith(map((tupledArg_3) => RouterModule_encodeParts(append_1(tupledArg_3[0], singleton(tupledArg_3[1] + RouterModule_encodeQueryString(queryString_1))), 1), RouterModule_trySeparateLast(tupledArg_2[0])), () => RouterModule_encodeParts(singleton(RouterModule_encodeQueryString(queryString_1)), 1))))]), delay(() => singleton_1(["onClick", (e_1) => {
+            return append(singleton_1(["href", (tupledArg_2 = PageModule_toUrlSegments(mp_1), (queryString_1 = tupledArg_2[1], defaultArgWith(map((tupledArg_3) => {
+                const r_1 = tupledArg_3[0];
+                const l_1 = tupledArg_3[1];
+                return RouterModule_encodeParts(append_1(r_1, singleton(l_1 + RouterModule_encodeQueryString(queryString_1))), 1);
+            }, RouterModule_trySeparateLast(tupledArg_2[0])), () => RouterModule_encodeParts(singleton(RouterModule_encodeQueryString(queryString_1)), 1))))]), delay(() => singleton_1(["onClick", (e_1) => {
                 Router_goToUrl(e_1);
             }])));
         })))))))));
@@ -117,7 +146,9 @@ function leftSide(p) {
 
 function inLayout(state, dispatch, title, docLink, p, elm) {
     let elems_1, elems;
-    return createElement("div", createObj(ofArray([["className", "bg-base-100 text-base-content h-screen"], ["data-theme", state.Theme], (elems_1 = [createElement("div", createObj(Helpers_combineClasses("drawer", ofArray([["className", "lg:drawer-open"], (elems = [createElement("input", createObj(Helpers_combineClasses("drawer-toggle", ofArray([["type", "checkbox"], ["id", "main-menu"]])))), rightSide(state, dispatch, title, docLink, elm), leftSide(p)], ["children", Interop_reactApi.Children.toArray(Array.from(elems))])]))))], ["children", Interop_reactApi.Children.toArray(Array.from(elems_1))])])));
+    return createElement("div", createObj(ofArray([["className", "bg-base-100 text-base-content h-screen"], ["data-theme", state.Theme], (elems_1 = [createElement("h1", {
+        children: ["test"],
+    }), createElement("div", createObj(Helpers_combineClasses("drawer", ofArray([["className", "lg:drawer-open"], (elems = [createElement("input", createObj(Helpers_combineClasses("drawer-toggle", ofArray([["type", "checkbox"], ["id", "main-menu"]])))), rightSide(state, dispatch, title, docLink, elm), leftSide(p)], ["children", Interop_reactApi.Children.toArray(Array.from(elems))])]))))], ["children", Interop_reactApi.Children.toArray(Array.from(elems_1))])])));
 }
 
 export function AppView(appViewInputProps) {
@@ -127,8 +158,12 @@ export function AppView(appViewInputProps) {
     let patternInput;
     const matchValue = state.Page;
     patternInput = ((matchValue.tag === 0) ? ["Installation", "/docs/install", createElement(InstallView, null)] : ((matchValue.tag === 1) ? ["How to use", "/docs/use", createElement(UseView, null)] : ((matchValue.tag === 2) ? ["QueryTable", "/querytable", createElement(QueryTable, null)] : ["Not found", "", "Not found"])));
+    const title = patternInput[0];
+    const docLink = patternInput[1];
+    const content = patternInput[2];
     return RouterModule_router(createObj(ofArray([["hashMode", 1], ["onUrlChanged", (arg_1) => {
         dispatch(new Msg(0, [PageModule_parseFromUrlSegments(arg_1)]));
-    }], (elements = singleton(inLayout(state, dispatch, patternInput[0], patternInput[1], state.Page, patternInput[2])), ["application", react.createElement(react.Fragment, {}, ...elements)])])));
+    }], (elements = singleton(inLayout(state, dispatch, title, docLink, state.Page, content)), ["application", react.createElement(react.Fragment, {}, ...elements)])])));
 }
 
+//# sourceMappingURL=View.js.map

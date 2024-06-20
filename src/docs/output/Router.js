@@ -130,14 +130,17 @@ export function PageModule_toUrlSegments(_arg) {
 
 export function Router_goToUrl(e) {
     e.preventDefault();
-    RouterModule_nav(singleton(e.currentTarget.attributes.href.value), 1, 1);
+    const href = e.currentTarget.attributes.href.value;
+    RouterModule_nav(singleton(href), 1, 1);
 }
 
 export function Router_navigatePage(p) {
     const tupledArg = PageModule_toUrlSegments(p);
     const queryString = tupledArg[1];
     defaultArgWith(map((tupledArg_1) => {
-        RouterModule_nav(append(tupledArg_1[0], singleton(tupledArg_1[1] + RouterModule_encodeQueryString(queryString))), 1, 1);
+        const r = tupledArg_1[0];
+        const l = tupledArg_1[1];
+        RouterModule_nav(append(r, singleton(l + RouterModule_encodeQueryString(queryString))), 1, 1);
     }, RouterModule_trySeparateLast(tupledArg[0])), () => {
         RouterModule_nav(singleton(RouterModule_encodeQueryString(queryString)), 1, 1);
     });
@@ -148,10 +151,13 @@ export function Cmd_navigatePage(p) {
     return Cmd_ofEffect((_arg_1) => {
         const queryString_1 = tupledArg[1];
         defaultArgWith(map((tupledArg_1) => {
-            RouterModule_nav(append(tupledArg_1[0], singleton(tupledArg_1[1] + RouterModule_encodeQueryString(queryString_1))), 1, 1);
+            const r = tupledArg_1[0];
+            const l = tupledArg_1[1];
+            RouterModule_nav(append(r, singleton(l + RouterModule_encodeQueryString(queryString_1))), 1, 1);
         }, RouterModule_trySeparateLast(tupledArg[0])), () => {
             RouterModule_nav(singleton(RouterModule_encodeQueryString(queryString_1)), 1, 1);
         });
     });
 }
 
+//# sourceMappingURL=Router.js.map

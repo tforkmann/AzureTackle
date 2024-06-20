@@ -40,3 +40,4 @@ export function QueryTable() {
     });
 }
 
+//# sourceMappingURL=QueryTable.js.map
