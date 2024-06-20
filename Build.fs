@@ -217,7 +217,7 @@ let pushPackage _ =
         runDotNet cmd buildDir)
 Target.create "Push" (fun _ -> pushPackage [] )
 
-let docsSrcPath = Path.getFullName "./src/Docs"
+let docsSrcPath = Path.getFullName "./src/docs"
 let docsDeployPath = "docs"
 
 Target.create "InstallDocs" (fun _ ->
