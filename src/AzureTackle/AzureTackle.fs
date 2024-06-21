@@ -343,13 +343,11 @@ module AzureTable =
         task {
             let azureTable = getTable props
 
-            let! response = azureTable.GetEntityAsync(partitionKey, rowKey)
-            let result = response.Value
-
-            if isNull result then
+            let! response = azureTable.GetEntityIfExistsAsync(partitionKey, rowKey)
+            if response.HasValue then
                 return None
             else
-                return Some (mapF result)
+                return Some (mapF response.Value)
         }
 
     let execute (mapF: TableEntity -> 't) (props: TableProps) =
