@@ -7,11 +7,9 @@ open Fable.Core.JsInterop
 type Page =
     | Install
     | Use
-    | QueryTable
-    | HandleNullValues
-    | ProvidingDefaultValues
-    | ParameterizedQuery
-    | InsertData
+    | Execute
+    | Upsert
+    | Filter
 
 [<RequireQualifiedAccess>]
 module Page =
@@ -20,11 +18,9 @@ module Page =
     let parseFromUrlSegments =
         function
         | [ "use" ] -> Use
-        | [ "querytable" ] -> QueryTable
-        | [ "handlenullvalues" ] -> HandleNullValues
-        | [ "providingdefaultvalues" ] -> ProvidingDefaultValues
-        | [ "parameterizedquery" ] -> ParameterizedQuery
-        | [ "insertdata" ] -> InsertData
+        | [ "execute" ] -> Execute
+        | [ "upsert" ] -> Upsert
+        | [ "filter" ] -> Filter
         | _ -> defaultPage
 
     let noQueryString segments : string list * (string * string) list = segments, []
@@ -33,11 +29,9 @@ module Page =
         function
         | Install -> [] |> noQueryString
         | Use -> ["use"] |> noQueryString
-        | QueryTable -> ["querytable"] |> noQueryString
-        | HandleNullValues -> ["handlenullvalues"] |> noQueryString
-        | ProvidingDefaultValues -> ["providingdefaultvalues"] |> noQueryString
-        | ParameterizedQuery -> ["parameterizedquery"] |> noQueryString
-        | InsertData -> [ "insertdata" ] |> noQueryString
+        | Execute -> ["execute"] |> noQueryString
+        | Upsert -> ["upsert"] |> noQueryString
+        | Filter -> ["filter"] |> noQueryString
 
 [<RequireQualifiedAccess>]
 module Router =

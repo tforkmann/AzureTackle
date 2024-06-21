@@ -28,37 +28,31 @@ let private rightSide state dispatch (title: string) (docLink: string) elm =
     Daisy.drawerContent [
         Daisy.navbar [
             Daisy.navbarStart [
-                Html.divClassed
-                    "lg:hidden"
-                    [ Daisy.button.label [
-                          button.square
-                          button.ghost
-                          prop.htmlFor "main-menu"
-                          prop.children [
-                              Svg.svg [
-                                  svg.viewBox (0, 0, 24, 24)
-                                  svg.className "inline-block w-6 h-6 stroke-current"
-                                  svg.children [
-                                      Svg.path [
-                                          svg.d "M4 6h16M4 12h16M4 18h16"
-                                          svg.strokeWidth 2
-                                      ]
-                                  ]
-                              ]
-                          ]
-                      ] ]
+                Html.divClassed "lg:hidden" [
+                    Daisy.button.label [
+                        button.square
+                        button.ghost
+                        prop.htmlFor "main-menu"
+                        prop.children [
+                            Svg.svg [
+                                svg.viewBox (0, 0, 24, 24)
+                                svg.className "inline-block w-6 h-6 stroke-current"
+                                svg.children [ Svg.path [ svg.d "M4 6h16M4 12h16M4 18h16"; svg.strokeWidth 2 ] ]
+                            ]
+                        ]
+                    ]
+                ]
             ]
         ]
 
-        Html.divClassed
-            "px-5 py-5"
-            [ Html.h2 [
-                  color.textPrimary
-                  ++ prop.className "my-6 text-5xl font-bold"
-                  prop.text title
-              ]
+        Html.divClassed "px-5 py-5" [
+            Html.h2 [
+                color.textPrimary ++ prop.className "my-6 text-5xl font-bold"
+                prop.text title
+            ]
 
-              elm ]
+            elm
+        ]
     ]
 
 let private leftSide (p: Page) =
@@ -68,24 +62,18 @@ let private leftSide (p: Page) =
                 prop.href mp
                 prop.onClick Router.goToUrl
                 if p = mp then
-                    (menuItem.active
-                     ++ prop.className "justify-between")
+                    (menuItem.active ++ prop.className "justify-between")
                 else
                     prop.className "justify-between"
-                prop.children [
-                    Html.span t
-                    Html.span [
-                        prop.className "badge"
-                        prop.text b
-                    ]
-                ]
+                prop.children [ Html.span t; Html.span [ prop.className "badge"; prop.text b ] ]
             ]
         ]
 
     let mi (t: string) (mp: Page) =
         Html.li [
             Html.a [
-                if p = mp then menuItem.active
+                if p = mp then
+                    menuItem.active
                 prop.text t
                 prop.href mp
                 prop.onClick Router.goToUrl
@@ -93,26 +81,19 @@ let private leftSide (p: Page) =
         ]
 
     Daisy.drawerSide [
-        Daisy.drawerOverlay [
-            prop.htmlFor "main-menu"
-        ]
+        Daisy.drawerOverlay [ prop.htmlFor "main-menu" ]
         Html.aside [
             prop.className "flex flex-col border-r w-80 bg-base-100 text-base-content"
             prop.children [
-                Html.divClassed
-                    "inline-block text-3xl font-title px-5 py-5 font-bold"
-                    [ Html.span [
-                          color.textPrimary
-                          prop.text "AzureTackle"
-                      ]
-                      Html.a [
-                          prop.href "https://www.nuget.org/packages/AzureTackle"
-                          prop.children [
-                              Html.img [
-                                  prop.src "https://img.shields.io/nuget/v/AzureTackle.svg?style=flat-square"
-                              ]
-                          ]
-                      ] ]
+                Html.divClassed "inline-block text-3xl font-title px-5 py-5 font-bold" [
+                    Html.span [ color.textPrimary; prop.text "AzureTackle" ]
+                    Html.a [
+                        prop.href "https://www.nuget.org/packages/AzureTackle"
+                        prop.children [
+                            Html.img [ prop.src "https://img.shields.io/nuget/v/AzureTackle.svg?style=flat-square" ]
+                        ]
+                    ]
+                ]
                 Daisy.menu [
                     menu.md
                     prop.className "flex flex-col p-4 pt-0"
@@ -120,8 +101,10 @@ let private leftSide (p: Page) =
                         Daisy.menuTitle [ Html.span "Docs" ]
                         mi "Install" Install
                         mi "Use" Use
-                        mi "QueryTable" QueryTable
-                        ]
+                        mi "Execute" Execute
+                        mi "Upsert" Upsert
+                        mi "Filter" Filter
+                    ]
                 ]
             ]
         ]
@@ -135,9 +118,7 @@ let private inLayout state dispatch (title: string) (docLink: string) (p: Page) 
             Daisy.drawer [
                 prop.className "lg:drawer-open"
                 prop.children [
-                    Daisy.drawerToggle [
-                        prop.id "main-menu"
-                    ]
+                    Daisy.drawerToggle [ prop.id "main-menu" ]
                     rightSide state dispatch title docLink elm
                     leftSide p
                 ]
@@ -152,18 +133,12 @@ let AppView (state: State) (dispatch: Msg -> unit) =
         match state.Page with
         | Install -> "Installation", "/docs/install", Pages.Install.InstallView()
         | Use -> "How to use", "/docs/use", Pages.Use.UseView()
-        | QueryTable -> "QueryTable", "/querytable", Pages.QueryTable.QueryTable()
+        | Execute -> "Execute", "/execute", Pages.Execute.Execute()
+        | Upsert -> "Upsert", "/upsert", Pages.Upsert.Upsert()
         | _ -> "Not found", "", Html.text "Not found"
 
     React.router [
         router.hashMode
-        router.onUrlChanged (
-            Page.parseFromUrlSegments
-            >> UrlChanged
-            >> dispatch
-        )
-        router.children [
-            content
-            |> inLayout state dispatch title docLink state.Page
-        ]
+        router.onUrlChanged (Page.parseFromUrlSegments >> UrlChanged >> dispatch)
+        router.children [ content |> inLayout state dispatch title docLink state.Page ]
     ]
