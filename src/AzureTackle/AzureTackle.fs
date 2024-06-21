@@ -451,17 +451,19 @@ module AzureTable =
             try
                 let azureTable = getTable props
 
-                let chunks =
-                    entities
-                    |> Array.chunkBySize 100
-                for chunks in chunks do
-                    let actions =
-                        chunks
-                        |> Array.map (fun entity ->
-                            TableTransactionAction(TableTransactionActionType.UpsertReplace, entity))
+                for _key, entities in entities |> Array.groupBy (fun x -> x.PartitionKey) do
+                    let chunks =
+                        entities
+                        |> Array.chunkBySize 100
 
-                    let! _ = azureTable.SubmitTransactionAsync(actions)
-                    return ()
+                    for chunks in chunks do
+                        let actions =
+                            chunks
+                            |> Array.map (fun entity ->
+                                TableTransactionAction(TableTransactionActionType.UpsertReplace, entity))
+
+                        let! _ = azureTable.SubmitTransactionAsync(actions)
+                        ()
             with exn ->
                 return failwithf "UpsertBatch failed with exn: %s" exn.Message
         }
