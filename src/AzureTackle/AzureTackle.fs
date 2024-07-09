@@ -344,7 +344,7 @@ module AzureTable =
             let azureTable = getTable props
 
             let! response = azureTable.GetEntityIfExistsAsync(partitionKey, rowKey)
-            if response.HasValue then
+            if not response.HasValue then
                 return None
             else
                 return Some (mapF response.Value)
