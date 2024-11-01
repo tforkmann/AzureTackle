@@ -350,7 +350,8 @@ module AzureTable =
                 return Some (mapF response.Value)
         }
 
-    let execute (mapF: TableEntity -> 't) (props: TableProps) =
+
+    let executeFirstPages numberOfPages (mapF: TableEntity -> 't) (props: TableProps) =
         task {
             try
                 let azureTable = getTable props
@@ -374,8 +375,9 @@ module AzureTable =
 
                 let mutable hasValue = true
                 let mutable allValues = System.Collections.Generic.List()
+                let mutable pages = 0
 
-                while hasValue do
+                while hasValue && (numberOfPages > pages || numberOfPages = -1) do
                     let! page = resultEnum.MoveNextAsync()
 
                     match page with
@@ -388,6 +390,9 @@ module AzureTable =
             with exn ->
                 return failwithf "ExecuteAsync failed with exn: %s" exn.Message
         }
+
+    let execute =
+        executeFirstPages -1
 
     let upsertInline (partKey, rowKey) (set: TableEntity -> TableEntity) (props: TableProps) =
         task {
