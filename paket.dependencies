@@ -16,7 +16,6 @@ group AzureTackle
   framework: net8.0
   nuget FSharp.Core
   nuget Azure.Data.Tables
-  nuget FSharp.Control.TaskSeq
 
 group Test
   storage: none

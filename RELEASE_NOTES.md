@@ -1,3 +1,5 @@
+#### 2.1.0 - 2024-11-01
+* Add executeFirstPages
 #### 2.0.16 - 2024-07-09
 * Fix TryGetValue
 #### 2.0.15 - 2024-06-21

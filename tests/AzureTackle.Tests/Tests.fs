@@ -321,6 +321,43 @@ let simpleTest =
 
             Expect.isTrue data "Timestamp isn't there"
         }
+        testTask "Insert test data as batch to table and read timestamp from the first page of the table" {
+
+            let testData = [|
+                {
+                    PartKey = "PartKey"
+                    RowKey = DateTime(2024, 1, 1) |> SortedRowKey.toSortedRowKey
+                    ValidFrom = DateTime(2024, 1, 1) |> DateTimeOffset
+                    ValidTo = None
+                    Value = 0.2
+                    ValueDecimal = 0.2m
+                    Exists = true
+                    Text = "isWorking"
+                }
+            |]
+
+            let entities =
+                testData
+                |> Array.map (fun d ->
+                    TableEntity(d.PartKey, d.RowKey)
+                        .Append("ValidFrom", d.ValidFrom)
+                        .AppendOptional("ValidTo", d.ValidTo)
+                        .Append("Exists", d.Exists)
+                        .Append("Text", d.Text)
+                        .Append("Value", d.Value)
+                        .Append("ValueDecimal", d.ValueDecimal))
+
+            do! tableProps |> AzureTable.upsertBatch entities
+
+            let! timeStamps =
+                tableProps
+                |> AzureTable.filter (RowKey testData.[0].RowKey)
+                |> AzureTable.executeFirstPages 1 (fun read -> read.Timestamp)
+
+            let data = timeStamps |> Array.tryHead |> Option.isSome
+
+            Expect.isTrue data "Timestamp isn't there"
+        }
         // testTask "Delete test data as batch" {
         //     let! values =
         //         tableProps

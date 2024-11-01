@@ -383,6 +383,7 @@ module AzureTable =
                     match page with
                     | true -> allValues.AddRange(resultEnum.Current.Values)
                     | false -> hasValue <- false
+                    pages <- pages + 1
 
                 return
                     allValues.ToArray()
@@ -391,8 +392,7 @@ module AzureTable =
                 return failwithf "ExecuteAsync failed with exn: %s" exn.Message
         }
 
-    let execute =
-        executeFirstPages -1
+    let execute (mapF: TableEntity -> 't) (props: TableProps) = executeFirstPages -1 mapF props
 
     let upsertInline (partKey, rowKey) (set: TableEntity -> TableEntity) (props: TableProps) =
         task {
@@ -473,7 +473,7 @@ module AzureTable =
                 return failwithf "UpsertBatch failed with exn: %s" exn.Message
         }
 
-    let delete (partKey, rowKey) (props: TableProps) =
+    let delete (partKey:string, rowKey) (props: TableProps) =
         task {
             try
                 let azureTable = getTable props
