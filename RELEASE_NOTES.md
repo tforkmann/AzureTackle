@@ -1,3 +1,5 @@
+#### 3.0.0-alpha001 - 2024-11-13
+* Upgrade to .NET9
 #### 2.1.0 - 2024-11-01
 * Add executeFirstPages
 #### 2.0.16 - 2024-07-09
