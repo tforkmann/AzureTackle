@@ -13,7 +13,6 @@ nuget Farmer
 group AzureTackle
   storage: none
   source https://api.nuget.org/v3/index.json
-  framework: net9.0
   nuget FSharp.Core
   nuget Azure.Data.Tables
 
