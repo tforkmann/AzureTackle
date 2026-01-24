@@ -1,3 +1,11 @@
+#### 3.0.0 - 2026-01-24
+* Upgrade to .NET10
+* Fix bug in upsertBatchInline (return was inside loop)
+* Refactor: Extract common helper for withTableClient/withConnectionString
+* Refactor: Simplify upsertInline to reuse upsert
+* Refactor: Clean up table function error handling
+* Refactor: Remove redundant try-with in ReadInt/ReadBigInt
+
 #### 3.0.0-alpha004 - 2025-11-3
 * Upgrade to .NET9
 #### 3.0.0-alpha003 - 2024-11-19

@@ -253,43 +253,30 @@ module AzureTable =
 
     let private table tableName (props: TableProps) =
         try
-            let newAzureTableConfig =
+            let azureTableConfig =
                 match props.AzureTableConfig with
-                | Some azureTableConfig ->
-                    match azureTableConfig.AzureAccount with
-                    | Some azureAccount ->
+                | Some cfg -> cfg
+                | None -> failwith "please use connect to initialize the Azure connection"
 
-                        let azureTable = getTableClient tableName azureAccount
+            let azureAccount =
+                match azureTableConfig.AzureAccount with
+                | Some acc -> acc
+                | None -> failwith "please use connect to initialize the Azure connection"
 
-                        {
-                            azureTableConfig with
-                                AzureTable = Some azureTable
-                                TableName = Some tableName
-                        }
+            let azureTable = getTableClient tableName azureAccount
 
-                    | None ->
-
-                        printfn "please use connect to initialize the Azure connection"
-                        failwith "please use connect to initialize the Azure connection"
-
-
-                | None ->
-                    printfn "please use connect to initialize the Azure connection"
-                    failwith "please use connect to initialize the Azure connection"
-
-
-
-            {
-                props with
-                    AzureTableConfig = Some newAzureTableConfig
+            let newAzureTableConfig = {
+                azureTableConfig with
+                    AzureTable = Some azureTable
+                    TableName = Some tableName
             }
+
+            { props with AzureTableConfig = Some newAzureTableConfig }
         with exn ->
             failwithf "Could not get a table %s" exn.Message
 
 
-    let withTableClient (tableServiceClient: TableServiceClient, tableName: string) =
-        let connection = UseTableServiceClient tableServiceClient
-
+    let private initWithConnection (connection: AzureConnection) (tableName: string) =
         let initAzConfig = {
             defaultAzConfig () with
                 AzureAccount = Some(connection.Connect())
@@ -301,21 +288,12 @@ module AzureTable =
         }
 
         table tableName props
+
+    let withTableClient (tableServiceClient: TableServiceClient, tableName: string) =
+        initWithConnection (UseTableServiceClient tableServiceClient) tableName
 
     let withConnectionString (connectionString: string, tableName: string) =
-        let connection = AzureConnection connectionString
-
-        let initAzConfig = {
-            defaultAzConfig () with
-                AzureAccount = Some(connection.Connect())
-        }
-
-        let props = {
-            defaultProps () with
-                AzureTableConfig = Some initAzConfig
-        }
-
-        table tableName props
+        initWithConnection (AzureConnection connectionString) tableName
 
     let filter (filter: AzureFilter) (props: TableProps) = { props with Filter = Some filter }
 
@@ -394,25 +372,6 @@ module AzureTable =
 
     let execute (mapF: TableEntity -> 't) (props: TableProps) = executeFirstPages -1 mapF props
 
-    let upsertInline (partKey, rowKey) (set: TableEntity -> TableEntity) (props: TableProps) =
-        task {
-            try
-                let azureTable = getTable props
-
-                let entity = TableEntity(partKey, rowKey) |> set
-
-                let! _ =
-                    azureTable.UpsertEntityAsync(
-                        entity,
-                        TableUpdateMode.Replace,
-                        props.CancellationToken |> Option.defaultValue CancellationToken.None
-                    )
-
-                return ()
-            with exn ->
-                return failwithf "Upsert failed with exn: %s" exn.Message
-        }
-
     let upsert (entity: TableEntity) (props: TableProps) =
         task {
             try
@@ -430,6 +389,10 @@ module AzureTable =
                 return failwithf "Upsert failed with exn: %s" exn.Message
         }
 
+    let upsertInline (partKey, rowKey) (set: TableEntity -> TableEntity) (props: TableProps) =
+        let entity = TableEntity(partKey, rowKey) |> set
+        upsert entity props
+
     let upsertBatchInline (messages: 'a array) (mapper: 'a -> TableEntity) (props: TableProps) =
         task {
             try
@@ -439,14 +402,17 @@ module AzureTable =
                     messages
                     |> Array.map mapper
                     |> Array.chunkBySize 100
-                for chunks in chunks do
+
+                for chunk in chunks do
                     let actions =
-                        chunks
+                        chunk
                         |> Array.map (fun entity ->
                             TableTransactionAction(TableTransactionActionType.UpsertReplace, entity))
 
                     let! _ = azureTable.SubmitTransactionAsync(actions)
-                    return ()
+                    ()
+
+                return ()
             with exn ->
                 return failwithf "UpsertBatch failed with exn: %s" exn.Message
         }
@@ -568,10 +534,7 @@ type TableEntityExtensions =
 
     [<Extension>]
     static member ReadInt (entity:TableEntity,propName:string) =
-        try
-            entity.GetInt32(propName).Value
-        with
-        | _ -> (entity.GetInt32(propName).Value)
+        entity.GetInt32(propName).Value
 
     [<Extension>]
     static member inline ReadOptionalInt (entity:TableEntity,propName:string) =
@@ -582,10 +545,7 @@ type TableEntityExtensions =
 
     [<Extension>]
     static member ReadBigInt (entity:TableEntity,propName:string) =
-        try
-            entity.GetInt64(propName).Value
-        with
-        | _ -> (entity.GetInt64(propName).Value)
+        entity.GetInt64(propName).Value
 
     [<Extension>]
     static member inline ReadOptionalBigInt (entity:TableEntity,propName:string) =
@@ -651,3 +611,60 @@ type TableEntityExtensions =
             Some(entity.GetDateTimeOffset(propName).Value)
         else
             None
+
+    // Guid Support
+    [<Extension>]
+    static member AppendGuid (entity:TableEntity,key:string,value:Guid) =
+        entity.Add(key, value.ToString())
+        entity
+
+    [<Extension>]
+    static member AppendOptionalGuid (entity:TableEntity,key:string,value:Guid option) =
+        match value with
+        | Some g -> entity.Add(key, g.ToString())
+        | None -> ()
+        entity
+
+    [<Extension>]
+    static member ReadGuid (entity:TableEntity,propName:string) =
+        let str : string = entity.GetString(propName)
+        Guid.Parse str
+
+    [<Extension>]
+    static member inline ReadOptionalGuid (entity:TableEntity,propName:string) =
+        if entity.ContainsKey propName then
+            let str : string = entity.GetString(propName)
+            match Guid.TryParse str with
+            | true, g -> Some g
+            | false, _ -> None
+        else
+            None
+
+    // Default value convenience methods
+    [<Extension>]
+    static member ReadBoolOrDefault (entity:TableEntity,propName:string,defaultValue:bool) =
+        if entity.ContainsKey propName then
+            entity.GetBoolean(propName).Value
+        else
+            defaultValue
+
+    [<Extension>]
+    static member ReadIntOrDefault (entity:TableEntity,propName:string,defaultValue:int) =
+        if entity.ContainsKey propName then
+            entity.GetInt32(propName).Value
+        else
+            defaultValue
+
+    [<Extension>]
+    static member ReadStringOrEmpty (entity:TableEntity,propName:string) =
+        if entity.ContainsKey propName then
+            entity.GetString(propName)
+        else
+            ""
+
+    [<Extension>]
+    static member ReadDoubleOrDefault (entity:TableEntity,propName:string,defaultValue:float) =
+        if entity.ContainsKey propName then
+            entity.GetDouble(propName).Value
+        else
+            defaultValue
