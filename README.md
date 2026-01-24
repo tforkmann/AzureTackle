@@ -2,13 +2,13 @@
 
 # AzureTackle
 
-Functional wrapper around Microsoft.Azure.Cosmos.Table SDK. `AzureTackle` simplifies the data access when talking to Azure tables.
+Functional F# wrapper around the Azure.Data.Tables SDK for Azure Table Storage. `AzureTackle` provides a fluent, pipeline-based API for table operations with F# functional programming patterns.
 
 ## Available Packages
 
 | Library  | Version |
 | ------------- | ------------- |
-| AzureTackle  | [![nuget - AzureTackle](https://img.shields.io/nuget/v/AzureTackle.svg?colorB=green)](hhttps://www.nuget.org/packages/AzureTackle/) |
+| AzureTackle  | [![nuget - AzureTackle](https://img.shields.io/nuget/v/AzureTackle.svg?colorB=green)](https://www.nuget.org/packages/AzureTackle/) |
 
 ## Install
 
@@ -20,200 +20,196 @@ dotnet add package AzureTackle
 paket add AzureTackle --project path/to/project.fsproj
 ```
 
-## Query a table inside a task
+## Query a table
 
-```fs
+```fsharp
 open AzureTackle
 
-// get the connection from the environment
-let connectionString() = Env.getVar "app_db"
-type TestData =
-    { PartKey: string
-      RowKey: RowKey
-      Date: DateTimeOffset
-      Exists: bool
-      Value: float
-      DoubleValue: double
-      Text: string }
+type TestData = {
+    PartKey: string
+    RowKey: string
+    Date: DateTimeOffset
+    Exists: bool
+    Value: float
+    Text: string
+}
 
 let! values =
-    AzureTable.connect connectionString()
-    |> AzureTable.table testTable
-    |> AzureTable.execute (fun read ->
-    {   PartKey = read.partKey
-        RowKey = read.rowKey
-        Date = read.dateTimeOffset "Date"
-        Value = read.float "Value"
-        DoubleValue = read.double "DoubleValue"
-        Text = read.string "Text" })
-let data =
-    values
-    |> function
-    | Ok r -> r |> Array.tryHead
-    | Error (exn:Exception) ->
-        failwithf "no data exn :%s" exn.Message
+    AzureTable.withConnectionString ("UseDevelopmentStorage=true", "MyTable")
+    |> AzureTable.execute (fun entity ->
+        {
+            PartKey = entity.PartitionKey
+            RowKey = entity.RowKey
+            Date = entity.ReadDateTimeOffset "Date"
+            Exists = entity.ReadBoolean "Exists"
+            Value = entity.ReadDouble "Value"
+            Text = entity.ReadString "Text"
+        })
 ```
 
-## Query a table inside a task and directly receive the results
+## Query with filter
 
-```fs
+```fsharp
 open AzureTackle
-
-// get the connection from the environment
-let connectionString() = Env.getVar "app_db"
-
-type TestData =
-    { PartKey: string
-      RowKey: RowKey
-      Date: DateTimeOffset
-      Exists: bool
-      Value: float
-      Text: string }
 
 let! values =
-    AzureTable.connect connectionString()
-    |> AzureTable.table testTable
-    |> AzureTable.executeDirect (fun read ->
-    {   PartKey = read.partKey
-        RowKey = read.rowKey
-        Date = read.dateTimeOffset "Date"
-        Value = read.float "Value"
-        Text = read.string "Text" })
+    AzureTable.withConnectionString ("UseDevelopmentStorage=true", "MyTable")
+    |> AzureTable.filter (PartKey "myPartition" + RowKey "myRow")
+    |> AzureTable.execute (fun entity ->
+        {
+            PartKey = entity.PartitionKey
+            RowKey = entity.RowKey
+            Date = entity.ReadDateTimeOffset "Date"
+            Exists = entity.ReadBoolean "Exists"
+            Value = entity.ReadDouble "Value"
+            Text = entity.ReadString "Text"
+        })
 ```
 
-## Query a table inside a task and receive one value
+## Filter DSL
 
-```fs
-open AzureTackle
+AzureTackle provides a composable filter DSL with operators:
 
-// get the connection from the environment
-let connectionString() = Env.getVar "app_db"
+```fsharp
+// AND operator (+)
+let andFilter = PartKey "pk" + RowKey "rk"
 
-type TestData =
-    { PartKey: string
-      RowKey: RowKey
-      Date: DateTimeOffset
-      Exists: bool
-      Value: float
-      Text: string }
+// OR operator (*)
+let orFilter = PartKey "pk1" * PartKey "pk2"
 
-let! value =
-    connectionString()
-    |> AzureTable.connect
-    |> AzureTable.table testTable
-    |> AzureTable.filterReceive ("PartKey","RowKey")
-    |> AzureTable.receive (fun read ->
-    {   PartKey = read.partKey
-        RowKey = read.rowKey
-        Date = read.dateTimeOffset "Date"
-        Value = read.float "Value"
-        Text = read.string "Text" })
+// NOT operator (!!)
+let notFilter = !! (RowKey "excluded")
+
+// Comparison functions
+let eq = Equal "Status" "active"
+let neq = NOT "Status" "deleted"
+let gt = GreaterThan "Age" 18
+let lt = LessThan "Price" 100.0
+let gte = GreaterThanOrEqual "Count" 5
+let lte = LessThanOrEqual "Score" 100
+
+// Complex combinations
+let complex =
+    (PartKey "users" + Equal "Status" "active")
+    * (PartKey "admins" + Equal "Status" "active")
 ```
 
-## Query a table inside a task with filter
+## Insert or update data (Upsert)
 
-```fs
+```fsharp
 open AzureTackle
+open Azure.Data.Tables
 
-// get the connection from the environment
-let connectionString() = Env.getVar "app_db"
+// Using fluent Append API
+let entity =
+    TableEntity("myPartition", "myRow")
+        .Append("Date", DateTimeOffset.UtcNow)
+        .Append("Value", 0.5)
+        .Append("Exists", true)
+        .Append("Text", "Hello World")
+        .AppendOptional("OptionalField", Some "value")
 
-type TestData =
-    { PartKey: string
-      RowKey: RowKey
-      Date: DateTimeOffset
-      Exists: bool
-      Value: float
-      Text: string }
+do! AzureTable.withConnectionString ("UseDevelopmentStorage=true", "MyTable")
+    |> AzureTable.upsert entity
+```
+
+## Inline upsert
+
+```fsharp
+do! AzureTable.withConnectionString ("UseDevelopmentStorage=true", "MyTable")
+    |> AzureTable.upsertInline ("myPartition", "myRow") (fun entity ->
+        entity
+            .Append("Date", DateTimeOffset.UtcNow)
+            .Append("Value", 0.5)
+            .Append("Exists", true)
+            .Append("Text", "Hello World"))
+```
+
+## Batch upsert
+
+```fsharp
+let entities = [|
+    TableEntity("pk1", "rk1").Append("Value", 1)
+    TableEntity("pk1", "rk2").Append("Value", 2)
+    TableEntity("pk1", "rk3").Append("Value", 3)
+|]
+
+do! AzureTable.withConnectionString ("UseDevelopmentStorage=true", "MyTable")
+    |> AzureTable.upsertBatch entities
+```
+
+## Delete entity
+
+```fsharp
+do! AzureTable.withConnectionString ("UseDevelopmentStorage=true", "MyTable")
+    |> AzureTable.delete ("partKey", "rowKey")
+```
+
+## Batch delete
+
+```fsharp
+let itemsToDelete = [| "rk1"; "rk2"; "rk3" |]
+
+do! AzureTable.withConnectionString ("UseDevelopmentStorage=true", "MyTable")
+    |> AzureTable.deleteBatch itemsToDelete (fun rk -> TableEntity("pk", rk))
+```
+
+## Available Read methods
+
+| Method | Return Type |
+| ------ | ----------- |
+| `ReadString` | `string` |
+| `ReadBoolean` | `bool` |
+| `ReadInt` | `int` |
+| `ReadBigInt` | `int64` |
+| `ReadDouble` | `float` |
+| `ReadDecimal` | `decimal` |
+| `ReadDateTime` | `DateTime` |
+| `ReadDateTimeOffset` | `DateTimeOffset` |
+| `ReadGuid` | `Guid` |
+| `ReadBinary` | `byte[]` |
+| `ReadOptionalString` | `string option` |
+| `ReadOptionalBoolean` | `bool option` |
+| `ReadOptionalInt` | `int option` |
+| `ReadOptionalDouble` | `float option` |
+| `ReadOptionalDateTimeOffset` | `DateTimeOffset option` |
+| `ReadOptionalGuid` | `Guid option` |
+| `ReadStringOrEmpty` | `string` (empty if null) |
+| `ReadBoolOrDefault` | `bool` (false if null) |
+| `ReadIntOrDefault` | `int` (0 if null) |
+| `ReadDoubleOrDefault` | `float` (0.0 if null) |
+
+## Using TableServiceClient
+
+```fsharp
+let tableServiceClient = TableServiceClient("UseDevelopmentStorage=true")
 
 let! values =
-    connectionString()
-    |> AzureTable.connect
-    |> AzureTable.table testTable
-    |> AzureTable.filter [DtmO ("Date",GreaterThanOrEqual, timeModel.DateStart);DtmO ("Date",LessThan, timeModel.DateEnd)]
-    |> AzureTable.execute (fun read ->
-    {   PartKey = read.partKey
-        RowKey = read.rowKey
-        Date = read.dateTimeOffset "Date"
-        Value = read.float "Value"
-        Text = read.string "Text" })
-let data =
-    values
-    |> function
-    | Ok r -> r |> Array.tryHead
-    | Error (exn:Exception) ->
-        failwithf "no data exn :%s" exn.Message
+    AzureTable.withTableClient (tableServiceClient, "MyTable")
+    |> AzureTable.execute (fun entity ->
+        { PartKey = entity.PartitionKey
+          RowKey = entity.RowKey
+          Text = entity.ReadString "Text" })
 ```
 
-## Insert testData into a table
+## Pagination
 
-```fs
-    let testData =
-        {   PartKey = "PartKey"
-            RowKey = DateTime.UtcNow |> RowKey.toRowKey
-            Date = DateTime.UtcNow |> System.DateTimeOffset
-            Value = 0.2
-            Exists = true
-            Text = "isWorking" }
-
-    do!
-    connectionString()
-    |> AzureTable.connect
-    |> AzureTable.table TestTable
-    |> AzureTable.insert
-    (testData.PartKey, testData.RowKey)
-        (fun set ->
-            set.dateTimeOffset ("Date",testData.Date) |> ignore
-            set.float ("Value",testData.Value) |> ignore
-            set.bool ("Exists",testData.Exists) |> ignore
-            set.string ("Text",testData.Text)
-            )
+```fsharp
+// Get only the first 2 pages of results
+let! values =
+    AzureTable.withConnectionString ("UseDevelopmentStorage=true", "MyTable")
+    |> AzureTable.executeFirstPages 2 (fun entity ->
+        { PartKey = entity.PartitionKey
+          RowKey = entity.RowKey })
 ```
 
-## Delete one entity from a table
+## SortedRowKey
 
-```fs
+Create sortable row keys from DateTime (newer entries sort first):
 
-    do!
-        connectionString()
-        |> AzureTable.connect
-        |> AzureTable.table TestTable
-        |> AzureTable.delete ("partKey", "rowKey")
+```fsharp
+open AzureTackle.Shared
+
+let rowKey = SortedRowKey.toSortedRowKey DateTime.UtcNow
+// Uses inverted ticks: DateTime.MaxValue.Ticks - dateTime.Ticks
 ```
-
-## Available Operator
-
-```fs
-type Operator =
-    | LessThan
-    | LessThanOrEqual
-    | GreaterThan
-    | GreaterThanOrEqual
-    | Equal
-    | NotEqual
-```
-
-## Available AzureFilter
-
-```fs
-type AzureFilter =
-    | Flt of string * Operator * float
-    | Txt of string * Operator * string
-    | Dtm of string * Operator * DateTime
-    | DtmO of string * Operator *  DateTimeOffset
-    | PaKey of Operator * string
-    | RoKey of Operator * string
-    | TStmp of Operator * DateTimeOffset
-```
-
-## Backup your data
-
-The only thing you have to do is to create a new storage account and connect it like this.
-
-```fs
-let azureCon =
-    (connectionString,connectionStringBackup)
-    |> AzureTable.connectWithBackup
-```
-
-All your Azure table operations will then be mirrored to the backup storage account
