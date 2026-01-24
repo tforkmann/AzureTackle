@@ -9,44 +9,52 @@ let UpsertView =
         Bulma.title.h1 "AzureTackle - Upsert"
         Html.hr []
         Bulma.content [
-            Bulma.title.h4 "Connect to your database"
-            Html.p [ prop.dangerouslySetInnerHTML "Get the connection from the environment" ]
-            linedMockupCode """
-                open AzureTackle
-                let connectionString() = Env.getVar "app_db
-                """
+            Bulma.title.h4 "Insert or update entities"
+            Html.p [ prop.text "Use AzureTable.upsert or upsertInline to insert or update entities in Azure Table Storage." ]
         ]
     ]
 
 let code =
     """
-    let tableProps = AzureTable.withConnectionString ("UseDevelopmentStorage=true", TestTable)
-    let mapper = fun (tableEntity :TableEntity) ->
-        {
-            PartKey = tableEntity.PartitionKey
-            RowKey = tableEntity.RowKey
-            ValidFrom = tableEntity.ReadDateTimeOffset("ValidFrom")
-            ValidTo = tableEntity.ReadOptionalDateTimeOffset("ValidTo")
-            Exists = tableEntity.ReadBoolean("Exists")
-            Value = tableEntity.GetDouble("Value").Value
-            ValueDecimal = tableEntity.ReadDecimal("ValueDecimal")
-            Text = tableEntity.GetString("Text")
-        }
+open AzureTackle
+open Azure.Data.Tables
 
-    let! values =
-        tableProps
-        |> AzureTable.execute (fun read ->
-            {
-                PartKey = read.PartitionKey
-                RowKey = read.RowKey
-                ValidFrom = read.ReadDateTimeOffset("ValidFrom")
-                ValidTo = read.ReadOptionalDateTimeOffset "ValidTo"
-                Exists = read.ReadBoolean "Exists"
-                Value = read.ReadDouble "Value"
-                ValueDecimal = read.ReadDecimal "ValueDecimal"
-                Text = read.ReadString "Text"
-            })
-        """
+// Single upsert with TableEntity
+let entity = TableEntity("myPartition", "myRow")
+entity.Add("Name", "John")
+entity.Add("Age", 30)
+
+do! AzureTable.withConnectionString ("UseDevelopmentStorage=true", "Users")
+    |> AzureTable.upsert entity
+
+// Fluent upsert with Append
+let entity =
+    TableEntity("myPartition", "myRow")
+        .Append("Name", "John")
+        .Append("Age", 30)
+        .Append("Active", true)
+        .AppendOptional("Email", Some "john@example.com")
+
+do! AzureTable.withConnectionString ("UseDevelopmentStorage=true", "Users")
+    |> AzureTable.upsert entity
+
+// Inline upsert (creates entity for you)
+do! AzureTable.withConnectionString ("UseDevelopmentStorage=true", "Users")
+    |> AzureTable.upsertInline ("myPartition", "myRow") (fun e ->
+        e.Append("Name", "Jane")
+         .Append("Age", 25)
+         .Append("Active", true))
+
+// Batch upsert (up to 100 entities per partition)
+let entities = [|
+    TableEntity("pk1", "rk1").Append("Value", 1)
+    TableEntity("pk1", "rk2").Append("Value", 2)
+    TableEntity("pk1", "rk3").Append("Value", 3)
+|]
+
+do! AzureTable.withConnectionString ("UseDevelopmentStorage=true", "Data")
+    |> AzureTable.upsertBatch entities
+    """
 
 let title = Html.text "AzureTackle"
 

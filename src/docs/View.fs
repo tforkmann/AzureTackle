@@ -135,7 +135,7 @@ let AppView (state: State) (dispatch: Msg -> unit) =
         | Use -> "How to use", "/docs/use", Pages.Use.UseView()
         | Execute -> "Execute", "/execute", Pages.Execute.Execute()
         | Upsert -> "Upsert", "/upsert", Pages.Upsert.Upsert()
-        | _ -> "Not found", "", Html.text "Not found"
+        | Filter -> "Filter DSL", "/filter", Pages.Filter.Filter()
 
     React.router [
         router.hashMode

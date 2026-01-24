@@ -10,6 +10,7 @@
         <Compile Include="Pages/Use.fs" />
         <Compile Include="Pages/Execute.fs" />
         <Compile Include="Pages/Upsert.fs" />
+        <Compile Include="Pages/Filter.fs" />
         <Compile Include="View.fs" />
         <Compile Include="App.fs" />
         <Content Include="index.html" />
